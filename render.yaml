@@ -1,0 +1,35 @@
+services:
+  # 1. Backend API Service
+  - type: web
+    name: sentientshield-api
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    # We explicitly set the port to match the Dockerfile's exposed port
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TRUSTED_ORIGINS
+        value: "*" 
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # 2. Frontend Streamlit Service
+  - type: web
+    name: sentientshield-dashboard
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    # Override the default Uvicorn command to run Streamlit instead
+    # We use the $PORT variable provided by Render
+    dockerCommand: sh -c "streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0"
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: sentientshield-api
+          property: url
