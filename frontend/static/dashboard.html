@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Dashboard • Premium</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body data-page="model">
+  <canvas id="lively-wallpaper"></canvas>
+  <div class="layout no-sidebar">
+    <header class="navbar">
+      <div class="wrap">
+        <div class="logo"><span class="shield"></span>SentientShield</div>
+        <nav>
+          <a href="/static/premium.html">Home</a>
+          <a href="/static/neuralfort_dashboard.html">Dashboard</a>
+          <a href="/static/dashboard.html" class="active">Model</a>
+          <a href="http://127.0.0.1:8502" target="_blank">Analytics</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="content">
+      <header class="page-header">
+        <div class="container">
+          <div>
+            <h1 class="title">Model Performance & Insights</h1>
+            <div class="subtitle">Metrics, drift, feature importance and prediction testing.</div>
+          </div>
+          <div class="actions">
+            <div id="headerStatus">
+              <div id="headerHealthChip" class="chip ok"><span class="dot"></span>—</div>
+              <div id="headerActivationChip" class="chip warn"><span class="dot"></span>—</div>
+            </div>
+            <button id="wallpaperToggle" class="btn" type="button" title="Toggle live wallpaper">Wallpaper: On</button>
+          </div>
+        </div>
+      </header>
+      <main class="container">
+    <section class="grid">
+      <div class="card">
+        <h3>Service Health</h3>
+        <div id="healthChip" class="chip ok"><span class="dot"></span>Loading…</div>
+      </div>
+      <div class="card">
+        <h3>Activation</h3>
+        <div id="activationChip" class="chip warn"><span class="dot"></span>Loading…</div>
+      </div>
+      <div class="card">
+        <h3>Anomaly Trend</h3>
+        <canvas id="anomalyChart" class="chart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Authentication</h3>
+        <p>Enter a Bearer token to enable secure API calls.</p>
+        <div class="row" style="gap: 8px; align-items: center;">
+          <input id="tokenInput" type="text" placeholder="Paste JWT token here" style="flex:1;" />
+          <button id="saveTokenBtn" class="btn" type="button">Save Token</button>
+        </div>
+        <p style="margin-top:6px;font-size:0.9em;">Status: <span id="tokenStatus">No token saved</span></p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Recent Anomalies</h3>
+        <div id="anomalyList" class="list"></div>
+      </div>
+      <div class="card">
+        <h3>Healing Actions</h3>
+        <div id="healingList" class="list"></div>
+      </div>
+      <div class="card">
+        <h3>LLM Insights</h3>
+        <div id="llmList" class="list"></div>
+      </div>
+      <div class="card">
+        <h3>Self-Healing & Retrain</h3>
+        <p>Trigger an on-demand retrain using current datasets and pipeline.</p>
+        <button id="retrainButton" class="btn" type="button">Trigger Retrain</button>
+        <p style="margin-top:6px;">Status: <span id="retrainStatus">Idle</span></p>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="card" style="flex: 1 1 100%;">
+        <h3>Security Copilot</h3>
+        <div id="copilotMessages" class="chat-window"></div>
+        <div class="chat-input">
+          <textarea id="copilotInput" placeholder="Ask about hacking precautions, hardening, or security best practices..."></textarea>
+          <button id="copilotSend" class="btn" type="button">Ask Copilot</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Model Prediction</h3>
+        <div style="margin-bottom:8px;">
+          <button id="inferenceButton" class="btn" type="button">Run Test Inference</button>
+        </div>
+        <form id="predictForm" class="form">
+          <div class="row-2">
+            <div>
+              <label>Request Type</label>
+              <select name="request_type">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+              </select>
+            </div>
+            <div>
+              <label>Payload Size</label>
+              <input type="number" name="payload_size" placeholder="Bytes" />
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label>Response Time</label>
+              <input type="number" name="response_time" placeholder="ms" />
+            </div>
+            <div>
+              <label>IP Reputation</label>
+              <input type="number" name="ip_reputation" placeholder="0-100" />
+            </div>
+          </div>
+          <div class="row-2">
+            <div>
+              <label>URL</label>
+              <input type="text" name="url" placeholder="https://example.com" />
+            </div>
+            <div>
+              <label>User Agent</label>
+              <input type="text" name="user_agent" placeholder="Mozilla/5.0" />
+            </div>
+          </div>
+          <div>
+            <label>Headers</label>
+            <textarea name="headers" placeholder="key: value"></textarea>
+          </div>
+          <div>
+            <label>Anomaly Score</label>
+            <input type="number" name="anomaly_score" placeholder="0-1" step="0.01" />
+          </div>
+          <button id="predictBtn" class="btn" type="submit">Run Prediction</button>
+        </form>
+      </div>
+      <div id="predictResult" class="row"></div>
+    </section>
+      </main>
+
+      <footer class="footer">© Model Dashboard • Premium</footer>
+      <div id="toast" class="toast"></div>
+
+  <script src="/static/js/lively_pointer_wallpaper.js"></script>
+  <script src="/static/app.js"></script>
+    </div>
+  </div>
+</body>
+</html>

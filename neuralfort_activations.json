@@ -1,0 +1,53 @@
+{
+  "b851bb478832fe108c33da7df2e4c8cd": {
+    "website_url": "www.google.com",
+    "domain": "www.google.com",
+    "registration_date": "2025-11-06T09:21:13.106760",
+    "activation_key": "b851bb478832fe108c33da7df2e4c8cd",
+    "status": "active",
+    "metadata": {
+      "registered_at": "2025-11-06T03:51:13.103Z",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Trae/1.104.3 Chrome/138.0.7204.235 Electron/37.3.1 Safari/537.36"
+    }
+  },
+  "99c1f57a608a27129cbb46a28ca6a208": {
+    "website_url": "https://test-infrastructure.com",
+    "domain": "test-infrastructure.com",
+    "registration_date": "2025-11-06T09:28:47.124865",
+    "activation_key": "99c1f57a608a27129cbb46a28ca6a208",
+    "status": "active",
+    "metadata": {}
+  },
+  "45cf2aa995164aacc3d90a55634a0859": {
+    "website_url": "https://education.oracle.com/racetocerttesting?path=afterActivation",
+    "domain": "education.oracle.com",
+    "registration_date": "2025-11-08T02:21:39.802885",
+    "activation_key": "45cf2aa995164aacc3d90a55634a0859",
+    "status": "active",
+    "metadata": {
+      "registered_at": "2025-11-07T20:51:39.798Z",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    }
+  },
+  "77359d0c5b05e592be110467bead3939": {
+    "website_url": "google.com",
+    "domain": "google.com",
+    "registration_date": "2025-11-08T12:44:23.562079",
+    "activation_key": "77359d0c5b05e592be110467bead3939",
+    "status": "active",
+    "metadata": {
+      "registered_at": "2025-11-08T07:14:23.558Z",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    }
+  },
+  "9ecb561911d0c367468d8e7d7783e528": {
+    "website_url": "https://example.com",
+    "domain": "example.com",
+    "registration_date": "2025-11-12T10:58:07.954297",
+    "activation_key": "9ecb561911d0c367468d8e7d7783e528",
+    "status": "active",
+    "metadata": {
+      "env": "dev"
+    }
+  }
+}

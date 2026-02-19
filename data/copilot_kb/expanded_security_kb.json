@@ -1,0 +1,222 @@
+[
+  {
+    "id": "kb-101",
+    "title": "Server-Side Request Forgery (SSRF) Defense",
+    "description": "Prevent SSRF attacks in microservices and cloud metadata endpoints.",
+    "precautions": [
+      "Disallow direct user-controlled URLs in server-side fetches",
+      "Use allowlist for outbound targets and protocols",
+      "Block access to cloud metadata IPs (e.g., 169.254.169.254)",
+      "Normalize and validate URLs before requests",
+      "Route outbound via proxy with policy enforcement"
+    ],
+    "steps": [
+      "Introduce URL allowlist and scheme checks",
+      "Disable SSRF-prone libraries or wrappers",
+      "Add egress firewall rules to block metadata endpoints",
+      "Instrument SSRF detection and alerting",
+      "Pen-test internal service URL handling"
+    ],
+    "tags": ["web", "cloud", "ssrf", "egress", "metadata"]
+  },
+  {
+    "id": "kb-102",
+    "title": "Command Injection Prevention",
+    "description": "Avoid unsafe shell execution and injection via strict input handling.",
+    "precautions": [
+      "Avoid shell invocation; prefer safe APIs",
+      "Never interpolate untrusted input into commands",
+      "Use fixed arguments and escape routines",
+      "Run commands under least-privilege accounts",
+      "Audit and restrict OS capabilities"
+    ],
+    "steps": [
+      "Refactor to library calls over shell",
+      "Add validation for command parameters",
+      "Use subprocess with explicit args, no shell=True",
+      "Add SELinux/AppArmor profiles",
+      "Create tests with injection payloads"
+    ],
+    "tags": ["backend", "os", "injection", "hardening"]
+  },
+  {
+    "id": "kb-103",
+    "title": "Insecure Deserialization Mitigation",
+    "description": "Prevent arbitrary code execution via safe parsing and schema validation.",
+    "precautions": [
+      "Avoid deserializing untrusted data formats",
+      "Use JSON with strict schema validation",
+      "Disable dangerous features in serializers",
+      "Isolate parsing in sandbox if needed",
+      "Log deserialization anomalies"
+    ],
+    "steps": [
+      "Replace unsafe pickle/YAML usages",
+      "Introduce JSON schema validators",
+      "Harden libraries configuration",
+      "Add anomaly alerts on parser errors",
+      "Fuzz-test deserialization handlers"
+    ],
+    "tags": ["serialization", "deserialization", "owasp", "validation"]
+  },
+  {
+    "id": "kb-104",
+    "title": "Path Traversal Protection",
+    "description": "Block directory traversal to sensitive paths in file handlers.",
+    "precautions": [
+      "Normalize paths and enforce base directories",
+      "Reject ../ and absolute path patterns",
+      "Map logical identifiers to storage (not raw paths)",
+      "Use OS permissions and chroot/jail where possible",
+      "Disable file serving from untrusted input"
+    ],
+    "steps": [
+      "Introduce path normalizers",
+      "Whitelist allowed subdirectories",
+      "Implement storage mapping layer",
+      "Add tests for traversal payloads",
+      "Audit file IO code paths"
+    ],
+    "tags": ["filesystem", "path", "validation", "hardening"]
+  },
+  {
+    "id": "kb-105",
+    "title": "Clickjacking Defense",
+    "description": "Protect UI from framing attacks using headers and CSP.",
+    "precautions": [
+      "Set X-Frame-Options: DENY or SAMEORIGIN",
+      "Use frame-ancestors directive in CSP",
+      "Avoid embedding sensitive pages",
+      "Implement UI anti-clickjacking overlays if needed",
+      "Monitor for framing violations"
+    ],
+    "steps": [
+      "Configure security headers in reverse proxy",
+      "Update CSP to include frame-ancestors",
+      "Restrict iframe usage",
+      "Add functional tests for header enforcement",
+      "Scan for third-party framing attempts"
+    ],
+    "tags": ["frontend", "headers", "csp", "browser"]
+  },
+  {
+    "id": "kb-106",
+    "title": "Open Redirect Prevention",
+    "description": "Avoid redirecting to attacker-controlled URLs.",
+    "precautions": [
+      "Never trust redirect targets from user input",
+      "Use allowlist of internal routes",
+      "Strip protocol/domain from redirect params",
+      "Validate against known route map",
+      "Log and rate-limit redirect endpoints"
+    ],
+    "steps": [
+      "Replace external URL redirects with route IDs",
+      "Add validation and normalization",
+      "Implement allowlist checks",
+      "Write tests for malicious redirect inputs",
+      "Monitor redirect patterns"
+    ],
+    "tags": ["web", "routing", "validation", "owasp"]
+  },
+  {
+    "id": "kb-107",
+    "title": "Software Supply Chain Security",
+    "description": "Secure dependencies and CI/CD pipeline integrity.",
+    "precautions": [
+      "Use lockfiles and verified registries",
+      "Enable dependency signing/verification",
+      "Scan for known CVEs continuously",
+      "Isolate CI secrets and use short-lived tokens",
+      "Gate releases with security checks"
+    ],
+    "steps": [
+      "Introduce SBOM generation",
+      "Enable SLSA or provenance checks",
+      "Integrate vuln scanners (e.g., Trivy, Dependabot)",
+      "Rotate CI credentials regularly",
+      "Add pre-release security gates"
+    ],
+    "tags": ["supply-chain", "ci", "sbom", "cicd", "slsa"]
+  },
+  {
+    "id": "kb-108",
+    "title": "Secrets Management Best Practices",
+    "description": "Protect credentials using vaults and policy-based access control.",
+    "precautions": [
+      "Use a secrets vault (HashiCorp Vault, AWS Secrets Manager)",
+      "Avoid storing secrets in code or configs",
+      "Scope secrets to minimal roles and TTLs",
+      "Rotate keys regularly",
+      "Audit secret access"
+    ],
+    "steps": [
+      "Migrate secrets to a vault",
+      "Refactor applications to load secrets at runtime",
+      "Implement short-lived credentials",
+      "Add auditing and alerts",
+      "Create runbooks for rotation"
+    ],
+    "tags": ["secrets", "iam", "vault", "rotation"]
+  },
+  {
+    "id": "kb-109",
+    "title": "Cloud Storage Exposure Prevention (S3/GCS)",
+    "description": "Avoid public exposure and misconfigurations of object storage.",
+    "precautions": [
+      "Disable public ACLs and enforce bucket policies",
+      "Encrypt objects at rest and in transit",
+      "Use MFA Delete and versioning",
+      "Scan for PII and secrets in objects",
+      "Monitor access logs and anomalies"
+    ],
+    "steps": [
+      "Apply block-public-access settings",
+      "Set encryption and TLS requirements",
+      "Enable versioning and MFA Delete",
+      "Integrate DLP scanning",
+      "Review access logs and alerts"
+    ],
+    "tags": ["cloud", "storage", "s3", "gcs", "dlp"]
+  },
+  {
+    "id": "kb-110",
+    "title": "Kubernetes Security Fundamentals",
+    "description": "Harden K8s clusters and workloads.",
+    "precautions": [
+      "Use RBAC and namespaces for isolation",
+      "Restrict pod privileges and capabilities",
+      "Enable network policies",
+      "Scan images and enforce admission policies",
+      "Secure etcd and API server"
+    ],
+    "steps": [
+      "Audit roles and service accounts",
+      "Apply PodSecurity standards",
+      "Define Calico/Cilium network policies",
+      "Integrate image scanning and OPA/Gatekeeper",
+      "Harden control plane configs"
+    ],
+    "tags": ["k8s", "rbac", "network", "admission", "container"]
+  },
+  {
+    "id": "kb-111",
+    "title": "LLM Prompt Injection and Data Exfiltration",
+    "description": "Reduce prompt injection risks and unauthorized data leakage in LLM apps.",
+    "precautions": [
+      "Isolate tool execution from raw model output",
+      "Use input/output content filters",
+      "Restrict sensitive tool capabilities and scopes",
+      "Implement retrieval allowlists and sanitation",
+      "Log and review model interactions"
+    ],
+    "steps": [
+      "Introduce guardrails layer before tool calls",
+      "Add content moderation for inputs/outputs",
+      "Scope tools to minimal permissions",
+      "Sanitize retrieved documents",
+      "Audit with anomaly alerts"
+    ],
+    "tags": ["llm", "prompt-injection", "guardrails", "retrieval", "privacy"]
+  }
+]

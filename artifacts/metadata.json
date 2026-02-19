@@ -1,0 +1,41 @@
+{
+  "best_model": "XGBoost",
+  "metrics": {
+    "accuracy": 0.9565,
+    "precision_macro": 0.9276585607072155,
+    "recall_macro": 0.9274999999999999,
+    "f1_macro": 0.9274695190653871,
+    "roc_auc_macro": 0.9952196851851852,
+    "classes": [
+      "brute_force",
+      "credential_stuffing",
+      "ddos",
+      "normal",
+      "sql_injection",
+      "xss"
+    ],
+    "model_name": "XGBoost"
+  },
+  "label_classes": [
+    "brute_force",
+    "credential_stuffing",
+    "ddos",
+    "normal",
+    "sql_injection",
+    "xss"
+  ],
+  "features": [
+    "request_type",
+    "headers",
+    "payload_size",
+    "response_time",
+    "ip_reputation",
+    "url",
+    "user_agent",
+    "anomaly_score"
+  ],
+  "target": "attack_type",
+  "last_trained_at": "2026-02-19T10:33:47.947461",
+  "dataset_path": "C:\\Users\\Dhruv\\Documents\\Projectss\\SentientShield-ML-Detector\\scripts\\..\\data\\web_threat_dataset.csv",
+  "active_model_path": "C:\\Users\\Dhruv\\Documents\\Projectss\\SentientShield-ML-Detector\\scripts\\..\\artifacts\\best_model.joblib"
+}

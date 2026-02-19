@@ -1,0 +1,234 @@
+[
+  {
+    "id": "kb-001",
+    "title": "SQL Injection Prevention",
+    "description": "Guidelines to prevent SQL injection in web applications.",
+    "precautions": [
+      "Use parameterized queries / prepared statements",
+      "Never concatenate untrusted input into SQL strings",
+      "Enforce least-privilege accounts for database access",
+      "Validate and sanitize all user inputs",
+      "Enable database auditing and anomaly alerts"
+    ],
+    "steps": [
+      "Refactor database access layer to use prepared statements",
+      "Add input validation utilities for common fields",
+      "Implement ORM-level escaping",
+      "Create unit tests for injection payloads",
+      "Configure WAF rules for SQLi signatures"
+    ],
+    "tags": ["web", "database", "injection", "owasp", "backend"],
+    "references": [
+      "https://owasp.org/www-community/attacks/SQL_Injection",
+      "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+    ]
+  },
+  {
+    "id": "kb-002",
+    "title": "Cross-Site Scripting (XSS) Defense",
+    "description": "Best practices to mitigate reflected, stored, and DOM-based XSS.",
+    "precautions": [
+      "Escape output in HTML, JS, and attributes",
+      "Use a templating engine that auto-escapes",
+      "Apply Content Security Policy (CSP)",
+      "Sanitize rich-text inputs on both client and server",
+      "Avoid `innerHTML` with untrusted content"
+    ],
+    "steps": [
+      "Audit all user-generated content render paths",
+      "Add a strict CSP with nonce-based scripts",
+      "Introduce a sanitization library for HTML inputs",
+      "Implement output encoding helpers",
+      "Create XSS-specific automated tests"
+    ],
+    "tags": ["web", "frontend", "xss", "owasp", "csp"],
+    "references": [
+      "https://owasp.org/www-community/attacks/xss/",
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"
+    ]
+  },
+  {
+    "id": "kb-003",
+    "title": "Cross-Site Request Forgery (CSRF) Protection",
+    "description": "Prevent unauthorized state-changing requests via CSRF tokens and SameSite cookies.",
+    "precautions": [
+      "Use anti-CSRF tokens on state-changing endpoints",
+      "Set cookies with `SameSite=Lax` or `Strict`",
+      "Validate Origin/Referer headers where applicable",
+      "Use double-submit cookie pattern if needed",
+      "Block CORS for sensitive endpoints"
+    ],
+    "steps": [
+      "Add CSRF middleware to your web framework",
+      "Annotate POST/PUT/PATCH/DELETE routes to require tokens",
+      "Configure cookie attributes: HttpOnly, Secure, SameSite",
+      "Write integration tests covering token validation",
+      "Review third-party integrations for CSRF risks"
+    ],
+    "tags": ["web", "csrf", "cookies", "security"],
+    "references": [
+      "https://owasp.org/www-community/attacks/csrf"
+    ]
+  },
+  {
+    "id": "kb-004",
+    "title": "Brute Force and Credential Stuffing Mitigation",
+    "description": "Reduce account takeover risk via rate limiting, MFA, and detection.",
+    "precautions": [
+      "Enable MFA for critical accounts",
+      "Apply adaptive rate limiting and IP reputation",
+      "Use password hashing with strong parameters (Argon2/Bcrypt)",
+      "Monitor login anomalies and lockout policies",
+      "Deploy bot detection on authentication endpoints"
+    ],
+    "steps": [
+      "Add rate limiter middleware",
+      "Integrate MFA providers or TOTP",
+      "Upgrade hash parameters and rehash on login",
+      "Instrument anomaly alerts on auth events",
+      "Implement CAPTCHA for suspicious patterns"
+    ],
+    "tags": ["auth", "mfa", "rate-limiting", "bot-detection", "passwords"],
+    "references": [
+      "https://owasp.org/www-project-top-ten/2017/A2_Broken_Authentication"
+    ]
+  },
+  {
+    "id": "kb-005",
+    "title": "Distributed Denial of Service (DDoS) Resilience",
+    "description": "Architect defenses against volumetric and application-layer DDoS.",
+    "precautions": [
+      "Use CDN/WAF with DDoS protection",
+      "Implement autoscaling and circuit breakers",
+      "Separate read/write paths and cache aggressively",
+      "Proxy critical endpoints behind rate-limited gateways",
+      "Prepare runbooks and contact channels"
+    ],
+    "steps": [
+      "Configure upstream DDoS protections",
+      "Instrument traffic baselines and anomaly alerts",
+      "Add backpressure and queue limits",
+      "Create incident playbooks and drills",
+      "Benchmark with synthetic load"
+    ],
+    "tags": ["network", "ddos", "waf", "scaling", "resilience"],
+    "references": [
+      "https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/"
+    ]
+  },
+  {
+    "id": "kb-006",
+    "title": "Privilege Escalation and Least Privilege",
+    "description": "Prevent lateral movement and escalation via strict RBAC and auditing.",
+    "precautions": [
+      "Implement role-based access control (RBAC)",
+      "Use just-in-time and just-enough permissions",
+      "Audit privileged actions and access",
+      "Isolate sensitive resources and secrets",
+      "Rotate credentials regularly"
+    ],
+    "steps": [
+      "Map roles and permissions",
+      "Introduce approval workflows for elevation",
+      "Log and review admin operations",
+      "Segment networks and vault secrets",
+      "Automate credential rotation"
+    ],
+    "tags": ["rbac", "iam", "privilege", "audit", "secrets"],
+    "references": [
+      "https://cloud.google.com/architecture/security-design-guide"
+    ]
+  },
+  {
+    "id": "kb-007",
+    "title": "Phishing and Social Engineering Awareness",
+    "description": "Reduce phishing risk via training, email security, and verification.",
+    "precautions": [
+      "Deploy SPF/DKIM/DMARC",
+      "Train employees with periodic simulations",
+      "Enable URL/link scanning and sandboxing",
+      "Verify out-of-band for sensitive requests",
+      "Report and triage suspicious emails"
+    ],
+    "steps": [
+      "Audit domain records for email authentication",
+      "Schedule training and track participation",
+      "Integrate secure email gateways",
+      "Establish verification protocols",
+      "Create reporting channels and SLAs"
+    ],
+    "tags": ["email", "phishing", "awareness", "training", "policy"],
+    "references": [
+      "https://www.cisa.gov/sites/default/files/publications/CISA_Phishing_Tip_Sheet.pdf"
+    ]
+  },
+  {
+    "id": "kb-008",
+    "title": "Ransomware Preparedness",
+    "description": "Prepare for ransomware via backups, segmentation, and detection.",
+    "precautions": [
+      "Maintain offline immutable backups",
+      "Segment networks and restrict SMB",
+      "Patch and update endpoints",
+      "Monitor for encryption and exfiltration behaviors",
+      "Plan incident response and legal contacts"
+    ],
+    "steps": [
+      "Implement backup rotation and testing",
+      "Harden Windows/Linux endpoints",
+      "Deploy EDR with ransomware signatures",
+      "Set up honey files and tripwires",
+      "Document response procedures"
+    ],
+    "tags": ["ransomware", "backup", "edr", "segmentation", "ir"],
+    "references": [
+      "https://www.cisa.gov/stopransomware/ransomware-guide"
+    ]
+  },
+  {
+    "id": "kb-009",
+    "title": "Secure Configuration and Misconfiguration Prevention",
+    "description": "Avoid insecure defaults and drift via baselines and continuous validation.",
+    "precautions": [
+      "Apply hardened baselines (CIS Benchmarks)",
+      "Automate configuration management",
+      "Scan for public exposure in cloud services",
+      "Use infrastructure-as-code with policy controls",
+      "Perform regular configuration reviews"
+    ],
+    "steps": [
+      "Adopt baseline templates per environment",
+      "Integrate policy-as-code (OPA/Sentinel)",
+      "Schedule misconfiguration scans",
+      "Implement drift detection alerts",
+      "Document exceptions with approvals"
+    ],
+    "tags": ["config", "cloud", "cis", "policy", "iac"],
+    "references": [
+      "https://www.cisecurity.org/cis-benchmarks/"
+    ]
+  },
+  {
+    "id": "kb-010",
+    "title": "API Security Fundamentals",
+    "description": "Protect APIs via authentication, authorization, input validation, and monitoring.",
+    "precautions": [
+      "Use JWT with short TTL and rotation",
+      "Validate input schemas strictly",
+      "Enforce scopes and rate limits",
+      "Avoid exposing sensitive fields",
+      "Log and monitor API usage"
+    ],
+    "steps": [
+      "Add schema validation and error handling",
+      "Implement scopes per endpoint",
+      "Configure per-client rate limits",
+      "Scan OpenAPI for exposures",
+      "Set up API monitoring and alerts"
+    ],
+    "tags": ["api", "jwt", "validation", "monitoring", "owasp"],
+    "references": [
+      "https://owasp.org/www-project-api-security/"
+    ]
+  }
+]

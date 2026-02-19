@@ -1,0 +1,89 @@
+SentientShield Web Threat Detection Model
+
+Overview: The SentientShield project implements a multi-class classification model to distinguish normal web traffic from various attack types (SQL injection, XSS, DDoS, brute force, credential stuffing). The best-performing model is an XGBoost classifier (gradient-boosted trees) using the multi:softprob objective, which outputs a probability distribution over all classes (via softmax)
+xgboosting.com
+. In practice, the model predicts one of six classes: five attack categories plus normal. A logistic regression and random forest were also evaluated, but XGBoost yielded the highest F1 score and was chosen as the active model.
+
+Features: The input features consist of eight fields from HTTP requests and associated metadata:
+
+request_type (categorical): HTTP method (GET, POST, etc.), one-hot encoded.
+
+headers (text): raw header string, vectorized via TF-IDF (unigrams and bigrams, up to 400 features).
+
+payload_size (numeric): request payload size, imputed (median) and scaled.
+
+response_time (numeric): server response time, imputed and scaled.
+
+ip_reputation (numeric): numeric score 0–100, imputed and scaled.
+
+url (text): request URL, TF-IDF vectorized (up to 400 features).
+
+user_agent (text): User-Agent string, TF-IDF vectorized (up to 300 features).
+
+anomaly_score (numeric): anomaly detection score (0–1), imputed and scaled.
+
+A ColumnTransformer (via scikit-learn) is used to preprocess these mixed types: numeric features are imputed and standardized, the categorical method is one-hot encoded, and the text fields are each passed through a TfidfVectorizer. This is assembled into a single pipeline before feeding the XGBoost classifier. (This design is similar to common mixed-data pipelines
+stackoverflow.com
+.)
+
+Dataset: The training data (data/web_threat_dataset.csv) is a synthetic dataset of 50,000 samples. It was generated with a 50:50 normal-to-threat ratio (25,000 normal, 25,000 attack). The five attack types are balanced among threats (5,000 each). Thus there are six target labels: “normal”, “sql_injection”, “xss”, “ddos”, “brute_force”, “credential_stuffing”. The code also provides a small sample CSV (sample_web_threats.csv) for testing, with similar columns. (No real-world traffic logs were provided, so class balance and feature distributions come from this generator script.) Key statistics:
+
+Class balance: ~50% normal, ~50% attacks (equally split among attack types).
+
+Dataset size: 50,000 rows, 8 features + label + metadata (timestamp, source_ip, response_code).
+
+Missing data: Not applicable since synthetic, but preprocessing pipelines include imputation to handle any.
+
+Model Architecture: The final model is an XGBoost classifier with hyperparameters: ~400 trees (n_estimators=400), max depth 6, learning rate 0.1, subsample/colsample=0.9, and objective="multi:softprob". It is wrapped in a scikit-learn Pipeline with the preprocessing above and trained on the eight features to predict the “attack_type” label. For completeness, logistic regression and random forest pipelines were also trained for comparison (with the same preprocessing), but XGBoost achieved the highest macro F1 score and was saved as best_model.joblib. (An SGDClassifier is reserved for an incremental model used in retraining.)
+
+Performance Metrics: According to the saved metadata, the XGBoost model achieved the following on a held-out test split:
+
+Accuracy: 0.9565
+
+Macro-averaged Precision: ≈0.9277
+
+Macro-averaged Recall: ≈0.9275
+
+Macro-averaged F1: ≈0.9275
+
+Macro-averaged ROC AUC: ≈0.9952
+These are overall (macro) metrics across all six classes (i.e. treating each class equally) as computed by precision_recall_fscore_support. A full classification report (not stored but printed during training) would show high precision/recall per class; the macro F1 of ~0.927 indicates the model is performing well on all categories. (We rely on macro averages since classes are balanced; micro-average would equal accuracy in this single-label multiclass setting.)
+
+Retraining and Evaluation Logic: The system includes a daily retraining script. It collects any new labeled logs from data/logs/ (if present), appends them to the dataset, and then incrementally trains an SGDClassifier (logistic loss) on the expanded data. Specifically:
+
+If no prior incremental model exists, it creates one (SGDClassifier in a new pipeline); otherwise it loads incremental_model.joblib.
+
+It then performs a partial_fit on 80% of the updated data and evaluates on a 20% hold-out.
+
+The incremental pipeline’s macro F1 is compared to the current “best” model’s F1 (from metadata). If improved, it replaces the best model (best_model.joblib) with the new pipeline. Otherwise it just logs metrics.
+All retraining outcomes (timestamps, model names, accuracy/precision/recall/F1, and whether the active model changed) are appended to artifacts/model_performance_log.csv. In the provided logs, no switch occurred (all entries are XGBoost with the same metrics), indicating either no new data or no better result from incremental learning.
+
+Prediction and Live Traffic: For live traffic, the model is served via a FastAPI endpoint. The API expects JSON with the eight feature fields (request_type, headers, etc.). A request to POST /predict first verifies a bearer JWT (environmentally configured). Then it loads the pipeline (best_model.joblib) and calls predict_proba on the input row. The response returns:
+
+predicted_label (one of the six classes),
+
+probabilities for all classes,
+
+model name, and
+
+confidence (max probability).
+If predict_proba is unavailable, it falls back to predict. Each prediction is logged in logs/api_calls.jsonl with timestamp, user, prediction, and confidence. The API also serves a /status endpoint (reporting current model and last-retrain logs) and a WebSocket (/ws/threats) for a demo “threat” stream (simulated data).
+
+Deployment: The project includes a Dockerfile that installs dependencies and runs Uvicorn on port 8000. The service mounts a static dashboard (HTML + JS) under /static. CORS is enabled for localhost by default. Environment variables allow configuring JWT secrets, CORS origins, and retrain interval (default 24h). Thus, the model is containerized and runs as a FastAPI microservice (as noted in the README and Dockerfile). No other orchestration (e.g. Kubernetes) is present.
+
+Logs & Metadata: Useful artifacts include:
+
+Metadata (artifacts/metadata.json): lists the chosen model (“XGBoost”), features used, target, class labels, and last training timestamp, along with the performance metrics
+xgboosting.com
+.
+
+Performance Log (model_performance_log.csv): shows historical retraining runs. (All current entries are XGBoost with identical metrics, indicating no active change.)
+
+API Logs (logs/api_calls.jsonl): records each API invocation and prediction outcome.
+
+Retrain Script Output: prints status to console and appends logs as above.
+No obvious data anomalies were detected in this synthetic setup. The code ensures missing text fields are filled with empty strings before TF-IDF, and numeric missing values use median imputation.
+
+Assumptions/Missing Pieces: Since no real dataset or logs were provided, we assume the synthetic data generation reflects intended patterns. The actual performance on live traffic depends on real distributions. The credential_stuffing class appears only in the synthetic data (the sample CSV lacked it). Without real examples, model performance on that class is unvalidated.
+
+In summary, SentientShield’s ML model is a standard multiclass classifier (XGBoost) on engineered features from HTTP requests, trained on a 50k-sample synthetic dataset. It includes a full CI/CD-like pipeline: preprocessing pipelines, evaluation metrics, saved metadata, and an endpoint for online prediction (deployed via FastAPI and Docker). The approach (mixed preprocessing and XGBoost) is typical for web-anomaly tasks

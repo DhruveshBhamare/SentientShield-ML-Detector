@@ -1,0 +1,24 @@
+{
+  "7fda32e95d844747ab76a7205650317e": {
+    "website_url": "https://education.oracle.com/racetocerttesting?path=afterActivation",
+    "domain": "education.oracle.com",
+    "registration_date": "2025-11-08T12:32:12.113088",
+    "activation_key": "7fda32e95d844747ab76a7205650317e",
+    "status": "active",
+    "metadata": {
+      "registered_at": "2025-11-08T07:02:12.111Z",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    }
+  },
+  "b3adc3542830876ee5c6adb32e320950": {
+    "website_url": "google.com",
+    "domain": "google.com",
+    "registration_date": "2025-11-08T12:32:49.004672",
+    "activation_key": "b3adc3542830876ee5c6adb32e320950",
+    "status": "active",
+    "metadata": {
+      "registered_at": "2025-11-08T07:02:48.999Z",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+    }
+  }
+}
