@@ -35,7 +35,7 @@
     "anomaly_score"
   ],
   "target": "attack_type",
-  "last_trained_at": "2026-02-19T10:33:47.947461",
+  "last_trained_at": "2026-02-19T14:39:08.448220",
   "dataset_path": "C:\\Users\\Dhruv\\Documents\\Projectss\\SentientShield-ML-Detector\\scripts\\..\\data\\web_threat_dataset.csv",
   "active_model_path": "C:\\Users\\Dhruv\\Documents\\Projectss\\SentientShield-ML-Detector\\scripts\\..\\artifacts\\best_model.joblib"
 }

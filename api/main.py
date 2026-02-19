@@ -34,19 +34,25 @@ PERF_LOG_PATH = os.path.join(ARTIFACTS_DIR, "model_performance_log.csv")
 
 app = FastAPI(title="SentientShield-WebAttackPredictor", version="1.0.0")
 
+# Mount static files
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 @app.get("/ping")
 def ping():
-    return "pong"
+    return HTMLResponse("pong")
 
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    print(f"DEBUG ROOT: STATIC_DIR={STATIC_DIR}, exists={os.path.exists(STATIC_DIR)}")
-    path = os.path.join(STATIC_DIR, "premium.html")
-    print(f"DEBUG ROOT: path={path}, exists={os.path.exists(path)}")
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    return RedirectResponse(url="/static/premium.html")
+@app.get("/")
+async def root_endpoint():
+    try:
+        print("DEBUG: Root endpoint called")
+        return RedirectResponse(url="/static/premium.html#bot")
+    except Exception as e:
+        print(f"DEBUG: Error in root endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return HTMLResponse(content=f"Error: {e}", status_code=500)
 
 @app.get("/premium.html", response_class=HTMLResponse)
 async def premium_page():
@@ -115,10 +121,7 @@ async def auth_dependency(credentials: HTTPAuthorizationCredentials = Depends(se
     token = credentials.credentials
     return verify_jwt_token(token)
 
-# Mount static files
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "static")
-if os.path.exists(STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 
 # Include NeuralFort API router
 app.include_router(neuralfort_router, prefix="/neuralfort", tags=["NeuralFort"])
@@ -174,44 +177,43 @@ class RequestFeatures(BaseModel):
     anomaly_score: float = Field(..., description="Anomaly score 0.0-1.0")
 
 # Log every API call in structured JSON
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start = time.time()
-    client_ip = request.client.host if request.client else None
-    path = request.url.path
-    method = request.method
-    user = None
-
-    # Try extract user from Authorization header
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.lower().startswith("bearer "):
-        token = auth_header.split(" ", 1)[1]
-        try:
-            payload = verify_jwt_token(token)
-            user = payload.get("sub") or payload.get("uid")
-        except Exception:
-            user = None
-
-    response = await call_next(request)
-
-    duration_ms = int((time.time() - start) * 1000)
-    log_entry = {
-        "ts": datetime.utcnow().isoformat() + "Z",
-        "path": path,
-        "method": method,
-        "status": response.status_code,
-        "duration_ms": duration_ms,
-        "client_ip": client_ip,
-        "user": user,
-    }
-
-    try:
-        with open(API_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception as e:
-        logging.error(f"Failed writing API log: {e}")
-
-    return response
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next):
+#     start = time.time()
+#     client_ip = request.client.host if request.client else None
+#     path = request.url.path
+#     method = request.method
+#     user = None
+#
+#     # Try extract user from Authorization header
+#     auth_header = request.headers.get("Authorization")
+#     if auth_header and auth_header.lower().startswith("bearer "):
+#         token = auth_header.split(" ", 1)[1]
+#         try:
+#             payload = verify_jwt_token(token)
+#             user = payload.get("sub") or payload.get("uid")
+#         except Exception:
+#             user = None
+#
+#     response = await call_next(request)
+#
+#     duration_ms = int((time.time() - start) * 1000)
+#     log_entry = {
+#         "ts": datetime.utcnow().isoformat() + "Z",
+#         "path": path,
+#         "method": method,
+#         "status": response.status_code,
+#         "duration_ms": duration_ms,
+#         "ip": client_ip,
+#         "user": user
+#     }
+#     try:
+#         with open(API_LOG_PATH, "a", encoding="utf-8") as f:
+#             f.write(json.dumps(log_entry) + "\n")
+#     except Exception:
+#         pass
+#
+#     return response
 
 # Lazy-loaded model
 _model = None
@@ -325,7 +327,7 @@ async def startup_event():
         # Defer raising until predict request to not crash startup in environments without model
         print(f"Startup warning: {e}")
     # Start background scheduler
-    start_daily_retrain_task()
+    # start_daily_retrain_task()
     # Start threat data simulator
     asyncio.create_task(_threat_simulator())
 

@@ -40,6 +40,8 @@ artifacts/*.joblib
 artifacts/*.csv
 data/*.db
 logs/
+*.log
+push_to_github.bat
 SentientShield-SourceCode.zip
 Report/
 .vercel/
