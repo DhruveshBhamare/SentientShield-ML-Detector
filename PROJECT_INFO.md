@@ -148,18 +148,34 @@ The core detection model is an **XGBoost Classifier** trained on synthetic web t
 
 ---
 
-## 7. Deployment
+## 7. Deployment (Cloud & Local)
 
-### **Docker**
-The project includes a `Dockerfile` for containerized deployment.
+### **Permanent Cloud Hosting (Recommended)**
+Since the code is already synchronized with your GitHub repository, you can deploy it permanently using these services:
+
+#### **Option 1: Render.com (Blueprint)**
+1.  Log in to [Render.com](https://render.com/) with your GitHub account.
+2.  Click **New +** -> **Blueprint**.
+3.  Select your `SentientShield-ML-Detector` repository.
+4.  Render will automatically detect the `render.yaml` file and create two services:
+    *   **sentientshield-api**: The FastAPI backend.
+    *   **sentientshield-dashboard**: The Streamlit analytics UI.
+5.  Click **Apply**. Your project will be live with a permanent `*.onrender.com` URL.
+
+#### **Option 2: Hugging Face Spaces (Free ML Hosting)**
+1.  Go to [huggingface.co/spaces](https://huggingface.co/spaces) and click **Create new Space**.
+2.  Select **SDK: Docker**.
+3.  Connect your GitHub repository.
+4.  Rename `Dockerfile.hf` to `Dockerfile` in the root (Hugging Face requires it).
+5.  It will build and host both services in a single container for free.
+
+### **Docker (Local Testing)**
+If you have Docker installed, you can run the entire stack locally:
 ```bash
-docker build -t sentientshield .
-docker run -p 8000:8000 sentientshield
+docker-compose up --build
 ```
-
-### **Cloud Deployment**
-- **Render/Railway**: Use the provided `render.yaml` or `Dockerfile`.
-- **Hugging Face Spaces**: Compatible with Docker SDK.
+*   **API**: [http://localhost:8000](http://localhost:8000)
+*   **Analytics**: [http://localhost:8501](http://localhost:8501)
 
 ---
 
