@@ -312,7 +312,156 @@ function bindEvents() {
   }
 
   const inferenceBtn = document.getElementById('inferenceButton');
-  // Bound elsewhere
+  if (inferenceBtn) {
+    inferenceBtn.addEventListener('click', () => {
+       const form = document.getElementById('predictForm');
+       if (form) {
+         // Fill with random test data
+         form.request_type.value = Math.random() > 0.5 ? 'POST' : 'GET';
+         form.payload_size.value = Math.floor(Math.random() * 5000) + 100;
+         form.response_time.value = Math.floor(Math.random() * 1000) + 10;
+         form.ip_reputation.value = Math.floor(Math.random() * 100);
+         form.url.value = '/api/v1/user/data';
+         form.user_agent.value = 'Mozilla/5.0 (TestBot)';
+         form.anomaly_score.value = (Math.random()).toFixed(2);
+         // Auto submit
+         form.dispatchEvent(new Event('submit'));
+       }
+    });
+  }
+
+  // Bind new buttons
+  bindButton('riskBtn', handleRiskScore);
+  bindButton('pipeBtn', handlePipeline);
+  bindButton('cveEnrichBtn', handleCveEnrich);
+  bindButton('cveSearchBtn', handleCveSearch);
+  bindButton('socGenBtn', handleSocReport);
+  bindButton('attckMapBtn', handleAttckMap);
+  bindButton('logSeverityBtn', () => handleLogAction('classify-severity'));
+  bindButton('logTypeBtn', () => handleLogAction('predict-type'));
+  bindButton('logFilterBtn', () => handleLogAction('filter-alert'));
+  bindButton('logIngestBtn', handleLogIngest);
+  bindButton('logSimilarBtn', handleLogSimilar);
+  bindButton('logZeroShotBtn', handleLogZeroShot);
+  bindButton('refreshAlertsBtn', loadLists);
+  bindButton('refreshTrendsBtn', () => { window.location.reload(); }); // Simple reload for trends for now
+}
+
+function bindButton(id, handler) {
+  const btn = document.getElementById(id);
+  if (btn) btn.addEventListener('click', handler);
+}
+
+async function handleRiskScore() {
+  const log = getValue('riskLog');
+  const asset = getValue('riskAsset');
+  if (!log) return toast('Please enter a log line');
+  const res = await apiCall('/api/logs/risk-score', { message: log, asset_value: parseFloat(asset) || 0.5 });
+  renderJsonResult('riskResult', res);
+}
+
+async function handlePipeline() {
+  const log = getValue('pipeLog');
+  if (!log) return toast('Please enter a log');
+  const asset = getValue('pipeAsset');
+  const ingest = document.getElementById('pipeIngest')?.checked;
+  const soc = document.getElementById('pipeSoc')?.checked;
+  const title = getValue('pipeTitle');
+  
+  const res = await apiCall('/api/logs/pipeline/run', { 
+    message: log, 
+    asset_value: parseFloat(asset) || 0.5,
+    ingest: !!ingest,
+    soc_report: !!soc,
+    title: title
+  });
+  renderJsonResult('pipeResult', res);
+}
+
+async function handleCveEnrich() {
+  const log = getValue('cveLog');
+  if (!log) return toast('Please enter a log with CVE');
+  const res = await apiCall('/api/logs/cve-enrich', { message: log });
+  renderJsonResult('cveResult', res);
+}
+
+async function handleCveSearch() {
+  const query = getValue('cveQuery');
+  if (!query) return toast('Please enter a query');
+  const res = await apiCall('/api/logs/cve-search', { query: query });
+  renderJsonResult('cveResult', res);
+}
+
+async function handleSocReport() {
+  const logs = getValue('socLogs');
+  if (!logs) return toast('Please enter logs');
+  const logList = logs.split('\n').filter(l => l.trim());
+  const res = await apiCall('/api/logs/soc-report', { logs: logList, title: getValue('socTitle') });
+  const el = document.getElementById('socResult');
+  if (el && res.report) {
+     el.innerHTML = `<div class="card" style="white-space: pre-wrap;">${res.report}</div>`;
+  } else {
+     renderJsonResult('socResult', res);
+  }
+}
+
+async function handleAttckMap() {
+  const log = getValue('attckInput');
+  if (!log) return toast('Please enter a log');
+  const res = await apiCall('/api/logs/attck-map', { message: log });
+  renderJsonResult('attckResult', res);
+}
+
+async function handleLogAction(action) {
+  const log = getValue('logInput');
+  if (!log) return toast('Please enter a log');
+  const res = await apiCall(`/api/logs/${action}`, { message: log });
+  renderJsonResult('logResult', res);
+}
+
+async function handleLogIngest() {
+   const log = getValue('logInput');
+   if (!log) return toast('Please enter a log');
+   const res = await apiCall('/api/logs/ingest', { logs: [log] });
+   renderJsonResult('logResult', res);
+}
+
+async function handleLogSimilar() {
+   const log = getValue('logInput');
+   if (!log) return toast('Please enter a log');
+   const res = await apiCall('/api/logs/similar', { query: log });
+   renderJsonResult('logResult', res);
+}
+
+async function handleLogZeroShot() {
+   const log = getValue('logInput');
+   const labels = getValue('zsLabels');
+   if (!log) return toast('Please enter a log');
+   const labelList = labels ? labels.split(',').map(s => s.trim()) : null;
+   const res = await apiCall('/api/logs/zero-shot', { message: log, labels: labelList });
+   renderJsonResult('logResult', res);
+}
+
+function getValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+async function apiCall(url, body) {
+   try {
+     const headers = { 'Content-Type': 'application/json' };
+     if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+     return await fetchJSON(url, { method: 'POST', body: JSON.stringify(body), headers });
+   } catch (e) {
+     toast(`Error: ${e.message}`);
+     return { error: e.message };
+   }
+}
+
+function renderJsonResult(id, data) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `<pre class="code-block" style="max-height: 300px; overflow: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;">${JSON.stringify(data, null, 2)}</pre>`;
 }
 
 async function triggerRetrain() {
@@ -334,6 +483,7 @@ function init() {
   if (page === 'overview') {
     loadOverview();
     loadLists();
+    bindEvents(); // Added bindEvents call
   }
 }
 
