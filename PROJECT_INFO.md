@@ -73,8 +73,8 @@
 
 ### **Accessing the Live Dashboards**
 The project has been deployed via secure tunnels for live access:
-- **Main Command Center (Live)**: [https://khaki-terms-reply.loca.lt](https://khaki-terms-reply.loca.lt)
-- **Analytics Dashboard (Live)**: [https://wide-coins-drum.loca.lt](https://wide-coins-drum.loca.lt)
+- **Main Command Center (Live)**: [https://rude-times-give.loca.lt](https://rude-times-give.loca.lt)
+- **Analytics Dashboard (Live)**: [https://slow-lemons-drop.loca.lt](https://slow-lemons-drop.loca.lt)
 
 *Note: These links are active as long as the local tunnel is running. If the links expire, run `lt --port 8000` and `lt --port 8502` to regenerate them.*
 
