@@ -107,7 +107,7 @@ The project has been deployed via secure tunnels for live access:
 
 NeuralFort is the "immune system" of the platform.
 
-- **Activation**: The framework requires an activation key (simulated in this project).
+- **Activation**: The framework is **auto-activated** for this deployment. No activation key is required.
 - **Capabilities**:
     - **Anomaly Detection**: Uses Isolation Forest to detect statistical outliers in system metrics.
     - **Healing Actions**:
@@ -115,6 +115,7 @@ NeuralFort is the "immune system" of the platform.
         - `RESTART_SERVICE`: Restarts a failing service.
         - `SCALE_RESOURCES`: Simulates resource scaling.
         - `CLEAR_CACHE`: Frees up system memory.
+    - **Security Copilot**: NVIDIA Qwen-powered assistant with local RAG fallback.
 
 ---
 

@@ -532,30 +532,31 @@ async def get_shap_explanations(
         raise HTTPException(status_code=500, detail=str(e))
 
 # LLM Insights and Recommendations Endpoints
-@router.post("/llm-insights", response_model=LLMInsightResponse)
-async def get_llm_insights(
-    request: LLMInsightRequest,
+@router.get("/llm-insights", response_model=LLMInsightResponse)
+async def generate_llm_insights(
+    query: Optional[str] = None,
+    include_recommendations: bool = True,
     framework: NeuralFortFramework = Depends(require_activation)
 ):
     """
-    Get LLM-powered insights and recommendations for system issues.
+    Generate LLM-powered insights and recommendations based on recent system data.
     """
     try:
         # Get recent data for analysis
-        recent_anomalies = list(framework.anomaly_detector.anomaly_history)[-10:]
-        recent_metrics = framework.infrastructure_monitor.get_recent_metrics(minutes=30)
-        recent_actions = list(framework.healing_engine.actions_history)[-5:]
+        recent_anomalies = list(framework.anomaly_detector.anomaly_history)[-20:]
+        recent_metrics = framework.infrastructure_monitor.get_recent_metrics(minutes=15)
+        recent_actions = list(framework.healing_engine.actions_history)[-10:]
         
-        # Generate insights using LLM Copilot
+        # Generate LLM insights
         insights = framework.llm_copilot.generate_insights(
             recent_anomalies, recent_metrics, recent_actions
         )
         
         return LLMInsightResponse(
             timestamp=datetime.now().isoformat(),
-            query=request.query,
+            query=query,
             insights=insights,
-            recommendations=insights.get("recommendations") if request.include_recommendations else None
+            recommendations=insights.get("recommendations") if include_recommendations else None
         )
         
     except Exception as e:

@@ -1224,9 +1224,17 @@ class NeuralFortFramework:
         self.nvidia_bot = NVIDIAQwenChatbot()
         
         # Uptime and alerts
-        self.start_time = None
+        self.start_time = datetime.now()
         self.alerts_config = self.infrastructure_monitor.thresholds.copy()
         self.active_alerts = deque(maxlen=50)
+        self.framework_state = {
+            "status": "active",
+            "system_health_score": 100.0,
+            "total_anomalies_detected": 0,
+            "total_healing_actions": 0,
+            "successful_healing_actions": 0,
+            "last_update": datetime.now().isoformat()
+        }
 
         # SHAP Explainer
         self.shap_explainer = None
@@ -1452,13 +1460,19 @@ class NeuralFortFramework:
             recent_anomalies, recent_metrics, recent_actions
         )
         
-        # Update framework state
+        # Update framework state with current monitoring data
+        health_score = self.infrastructure_monitor.get_system_health_score()
         self.framework_state.update({
             "activation_status": "active" if self.is_activated else "inactive",
             "healing_success_rate": self.healing_engine.get_success_rate(),
             "total_anomalies": len(self.anomaly_detector.anomaly_history),
             "recent_anomalies": len(recent_anomalies),
-            "recent_healing_actions": len(recent_actions)
+            "recent_healing_actions": len(recent_actions),
+            "system_health_score": health_score,
+            "total_anomalies_detected": len(self.anomaly_detector.anomaly_history),
+            "total_healing_actions": len(self.healing_engine.actions_history),
+            "successful_healing_actions": sum(1 for a in self.healing_engine.actions_history if a.success),
+            "last_update": datetime.now().isoformat()
         })
         
         return {

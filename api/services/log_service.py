@@ -1,9 +1,13 @@
 import math
 import os
 import sqlite3
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any
 import re
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Base directory for models
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
