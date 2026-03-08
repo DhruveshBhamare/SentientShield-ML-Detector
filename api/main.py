@@ -78,13 +78,12 @@ async def neuralfort_page():
             return f.read()
     return RedirectResponse(url="/static/neuralfort_dashboard.html")
 
-# Configure CORS from env
-TRUSTED_ORIGINS = [o.strip() for o in os.getenv("TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1").split(",") if o.strip()]
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=TRUSTED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

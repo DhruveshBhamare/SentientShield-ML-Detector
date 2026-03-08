@@ -331,7 +331,6 @@ function bindEvents() {
   }
 
   // Bind new buttons
-  bindButton('riskBtn', handleRiskScore);
   bindButton('pipeBtn', handlePipeline);
   bindButton('cveEnrichBtn', handleCveEnrich);
   bindButton('cveSearchBtn', handleCveSearch);
@@ -352,13 +351,6 @@ function bindButton(id, handler) {
   if (btn) btn.addEventListener('click', handler);
 }
 
-async function handleRiskScore() {
-  const log = getValue('riskLog');
-  const asset = getValue('riskAsset');
-  if (!log) return toast('Please enter a log line');
-  const res = await apiCall('/api/logs/risk-score', { message: log, asset_value: parseFloat(asset) || 0.5 });
-  renderJsonResult('riskResult', res);
-}
 
 async function handlePipeline() {
   const log = getValue('pipeLog');

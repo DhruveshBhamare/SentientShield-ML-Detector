@@ -76,7 +76,9 @@ The project has been deployed via secure tunnels for live access:
 - **Main Command Center (Live)**: [https://rude-times-give.loca.lt](https://rude-times-give.loca.lt)
 - **Analytics Dashboard (Live)**: [https://ten-swans-grab.loca.lt](https://ten-swans-grab.loca.lt)
 
-**Tunnel Password**: `2402:3a80:c86:afeb:bc21:b8db:41d4:6e3c` (Enter this when prompted to access the tunnel)
+**Tunnel Password (IPv4)**: `42.108.236.104` (Enter this when prompted to access the tunnel)
+
+*Note: If you see a Localtunnel reminder page, click "Visit Site" or enter the IPv4 address above.*
 
 *Note: These links are active as long as the local tunnel is running. If the links expire, run `lt --port 8000` and `lt --port 8502` to regenerate them.*
 
@@ -91,19 +93,11 @@ The project has been deployed via secure tunnels for live access:
 - **What it is**: A chatbot powered by RAG and LLMs.
 - **How to use**: Type questions like *"Explain the latest SQL injection trends"* or *"What does CVE-2021-44228 mean?"*.
 
-#### **2. Predictive Risk Scoring**
-- **What it is**: Calculates a risk score (0-100) for a specific log line.
-- **How to use**:
-    1. Go to the "Predictive Risk Scoring" card.
-    2. Paste a log line.
-    3. Set an Asset Value (0.0 - 1.0).
-    4. Click "Compute Risk".
-
-#### **3. SOC Report Generator**
+#### **2. SOC Report Generator**
 - **What it is**: Creates a professional incident report.
 - **How to use**: Paste multiple suspicious log lines into the generator and click "Generate". The AI will summarize the attack vector, impact, and remediation steps.
 
-#### **4. Threat Monitor**
+#### **3. Threat Monitor**
 - **What it is**: A live feed of detected threats.
 - **How to use**: Watch the table at the bottom of the dashboard. It updates in real-time via WebSockets.
 

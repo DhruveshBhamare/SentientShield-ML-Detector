@@ -1211,7 +1211,8 @@ class NeuralFortFramework:
     
     def __init__(self, activation_key: str = None):
         self.activation_key = activation_key
-        self.is_activated = False
+        # Auto-activate for local development/deployment ease
+        self.is_activated = True
         
         # Core components
         self.activation_manager = WebsiteActivationManager()
