@@ -475,6 +475,63 @@ class MITREAttckMapper:
         finally:
             conn.close()
 
+import re
+import requests
+import base64
+
+class NVIDIAQwenChatbot:
+    """NVIDIA-powered chatbot using Qwen 3.5 model."""
+    def __init__(self, api_key: str = "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"):
+        self.api_key = api_key
+        self.invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        self.model = "qwen/qwen3.5-397b-a17b"
+
+    def generate_response(self, prompt: str, stream: bool = False):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Accept": "text/event-stream" if stream else "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4096,
+            "temperature": 0.60,
+            "top_p": 0.95,
+            "top_k": 20,
+            "presence_penalty": 0,
+            "repetition_penalty": 1,
+            "stream": stream,
+            "chat_template_kwargs": {"enable_thinking": True},
+        }
+        try:
+            response = requests.post(self.invoke_url, headers=headers, json=payload, stream=stream, timeout=60)
+            response.raise_for_status()
+            if stream:
+                # Return a generator for streaming
+                def response_generator():
+                    for line in response.iter_lines():
+                        if line:
+                            decoded_line = line.decode("utf-8")
+                            if decoded_line.startswith("data: "):
+                                data_str = decoded_line[6:]
+                                if data_str == "[DONE]":
+                                    break
+                                try:
+                                    data = json.loads(data_str)
+                                    content = data.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                    if content:
+                                        yield content
+                                except:
+                                    continue
+                return response_generator()
+            else:
+                data = response.json()
+                return data.get("choices", [{}])[0].get("message", {}).get("content", "No response generated.")
+        except Exception as e:
+            logger.error(f"NVIDIA API Error: {e}")
+            return f"Error: {str(e)}"
+
 class SOCReportGenerator:
     def __init__(self, clf: DistilBERTLogClassifier, attck: MITREAttckMapper):
         self.available = False

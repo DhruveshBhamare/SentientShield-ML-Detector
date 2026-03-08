@@ -585,21 +585,28 @@
         addChatMessage(text, 'user');
         chatInputEl.value = '';
         
-        // Show typing indicator
-        if (typingIndicator) typingIndicator.style.display = 'flex';
-        
-        try {
-          const res = await fetch('/api/logs/llm-generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: text })
-          });
-          const data = await res.json();
-          if (typingIndicator) typingIndicator.style.display = 'none';
-          addChatMessage(data.text || "I'm sorry, I couldn't process that request.", 'bot');
-        } catch (e) {
-          if (typingIndicator) typingIndicator.style.display = 'none';
-          addChatMessage("Connection error. Please try again.", 'bot');
+        // Use the unified handleChat from app.js if available
+        if (typeof handleChat === 'function') {
+          await handleChat(text);
+        } else {
+          // Fallback logic if handleChat is not yet defined
+          if (typingIndicator) typingIndicator.style.display = 'flex';
+          try {
+            const res = await fetch('/neuralfort/copilot/chat', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('ss_token') || ''}`
+              },
+              body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            if (typingIndicator) typingIndicator.style.display = 'none';
+            addChatMessage(data.answer || "I'm sorry, I couldn't process that request.", 'bot');
+          } catch (e) {
+            if (typingIndicator) typingIndicator.style.display = 'none';
+            addChatMessage("Connection error. Please try again.", 'bot');
+          }
         }
       });
     }

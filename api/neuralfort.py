@@ -1204,6 +1204,8 @@ class SecurityKnowledgeBase:
             "suggested_steps": combined_steps
         }
 
+from .services.log_service import NVIDIAQwenChatbot
+
 class NeuralFortFramework:
     """Main NeuralFort framework orchestrator"""
     
@@ -1218,6 +1220,7 @@ class NeuralFortFramework:
         self.healing_engine = SelfHealingEngine()
         self.llm_copilot = NeuralFortLLMCopilot()
         self.security_kb = SecurityKnowledgeBase()
+        self.nvidia_bot = NVIDIAQwenChatbot()
         
         # Uptime and alerts
         self.start_time = None
@@ -1229,20 +1232,48 @@ class NeuralFortFramework:
         self._load_shap_explainer()
 
     def chat_with_copilot(self, message: str) -> Dict[str, Any]:
-        """Respond to a chat query using the self-made security KB and context."""
+        """Respond to a chat query using the NVIDIA Qwen API, security KB, and system context."""
         try:
+            # 1. Get relevant context from local Knowledge Base
             kb_response = self.security_kb.answer_query(message, top_k=3)
-
+            
+            # 2. Get system status context
             health = self.infrastructure_monitor.get_system_health_score()
             anomalies_recent = list(self.anomaly_detector.anomaly_history)[-5:]
-            context_notes = []
-            if health < 70:
-                context_notes.append("System health is below optimal; prioritize stability hardening.")
+            
+            # 3. Construct a rich prompt for the NVIDIA LLM
+            context_prompt = (
+                f"You are SentientBot, an advanced AI security co-pilot. "
+                f"Answer the user query based on the provided security knowledge base and system context.\n\n"
+                f"User Query: {message}\n\n"
+                f"Security KB Context:\n{kb_response['answer']}\n\n"
+                f"Current System Status:\n"
+                f"- Health Score: {health}/100\n"
+            )
+            
             if anomalies_recent:
                 sev_counts = defaultdict(int)
                 for a in anomalies_recent:
                     sev_counts[a.severity.value] += 1
-                context_notes.append(f"Recent anomalies: {dict(sev_counts)}")
+                context_prompt += f"- Recent Anomalies: {dict(sev_counts)}\n"
+            
+            context_prompt += "\nProvide a professional, technical, and actionable response."
+
+            # 4. Generate response using NVIDIA Qwen
+            try:
+                ai_answer = self.nvidia_bot.generate_response(context_prompt, stream=False)
+                kb_response["answer"] = ai_answer
+                kb_response["model"] = self.nvidia_bot.model
+            except Exception as e:
+                logger.error(f"NVIDIA Chat failed, using KB fallback: {e}")
+                kb_response["fallback"] = True
+
+            # 5. Add context metadata
+            context_notes = []
+            if health < 70:
+                context_notes.append("System health is below optimal; prioritize stability hardening.")
+            if anomalies_recent:
+                context_notes.append("Recent anomalies detected; review logs for lateral movement.")
 
             if context_notes:
                 kb_response["context"] = {

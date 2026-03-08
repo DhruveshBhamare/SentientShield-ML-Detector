@@ -458,6 +458,38 @@ async function apiCall(url, body) {
    }
 }
 
+async function handleChat(text) {
+  const typingIndicator = document.getElementById('typingIndicator');
+  if (typingIndicator) typingIndicator.style.display = 'block';
+  try {
+    const res = await fetch(API.copilot, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`
+      },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json();
+    if (typingIndicator) typingIndicator.style.display = 'none';
+    
+    const botResponse = data.answer || "I'm sorry, I couldn't process that request.";
+    if (typeof addChatMessage === 'function') {
+      addChatMessage(botResponse, 'bot');
+    } else {
+      console.log("Bot:", botResponse);
+    }
+    
+    if (data.sources && data.sources.length > 0) {
+      console.log("Sources:", data.sources);
+    }
+    return data;
+  } catch (e) {
+    if (typingIndicator) typingIndicator.style.display = 'none';
+    toast(`Chat error: ${e.message}`);
+  }
+}
+
 function renderJsonResult(id, data) {
   const el = document.getElementById(id);
   if (!el) return;

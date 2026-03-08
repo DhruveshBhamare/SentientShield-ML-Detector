@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends
 from ..core.security import auth_dependency
 import os
-from ..services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, CVERAGEngine, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine
+from ..services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, CVERAGEngine, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 _clf = DistilBERTLogClassifier()
@@ -22,6 +22,7 @@ _cve = CVERAGEngine(_embedder)
 _trend = PGTrendStore(os.getenv("DATABASE_URL")) if os.getenv("DATABASE_URL") else TrendStore(_attck.db_path)
 _risk = RiskScoringEngine(_clf, _cve, _trend, _embedder)
 _pipe = PipelineEngine(_clf, _embedder, _index, _attck, _cve, _risk, _soc)
+_nvidia_bot = NVIDIAQwenChatbot()
 
 class LogRequest(BaseModel):
     message: str = Field(..., description="Log message text")
@@ -108,8 +109,15 @@ class SocReportRequest(BaseModel):
 
 @router.post("/soc-report")
 async def soc_report(req: SocReportRequest, user: Dict = Depends(auth_dependency)):
-    res = _soc.generate(req.logs, req.title)
-    return {"report": res["report"], "model": res["model"], "user": user.get("sub") or user.get("uid")}
+    try:
+        # Prepare the custom SOC report prompt for NVIDIA Qwen
+        prompt = _soc._prompt(req.logs, req.title)
+        report = _nvidia_bot.generate_response(prompt, stream=False)
+        return {"report": report, "model": _nvidia_bot.model, "user": user.get("sub") or user.get("uid")}
+    except Exception as e:
+        logger.error(f"NVIDIA SOC Report failed: {e}")
+        res = _soc.generate(req.logs, req.title)
+        return {"report": res["report"], "model": res["model"], "user": user.get("sub") or user.get("uid"), "fallback": True}
 
 class CveEnrichRequest(BaseModel):
     message: str
@@ -153,20 +161,24 @@ async def cve_explain(req: CveExplainRequest, user: Dict = Depends(auth_dependen
         f"- Remediation steps\n"
     )
     explanation = ""
-    if getattr(_soc, "available", False) and getattr(_soc, "generator", None):
-        out = _soc.generator(prompt, do_sample=True, temperature=0.2, top_p=0.9, max_new_tokens=400)
-        if isinstance(out, list) and out:
-            explanation = out[0].get("generated_text", "").strip()
+    try:
+        explanation = _nvidia_bot.generate_response(prompt, stream=False)
+    except Exception as e:
+        logger.error(f"NVIDIA CVE Explanation failed: {e}")
+        if getattr(_soc, "available", False) and getattr(_soc, "generator", None):
+            out = _soc.generator(prompt, do_sample=True, temperature=0.2, top_p=0.9, max_new_tokens=400)
+            if isinstance(out, list) and out:
+                explanation = out[0].get("generated_text", "").strip()
+            else:
+                explanation = str(out).strip()
         else:
-            explanation = str(out).strip()
-    else:
-        explanation = (
-            f"{rec['id']} ({rec['severity']}): {rec['title']}\n"
-            f"- Summary: {rec['description'][:400]}...\n"
-            f"- CVSS: {rec['cvss']} | Method: {rec['method']}\n"
-            f"- Fix: {rec['fix']}\n"
-        )
-    return {"explanation": explanation, "cve": rec, "user": user.get("sub") or user.get("uid")}
+            explanation = (
+                f"{rec['id']} ({rec['severity']}): {rec['title']}\n"
+                f"- Summary: {rec['description'][:400]}...\n"
+                f"- CVSS: {rec['cvss']} | Method: {rec['method']}\n"
+                f"- Fix: {rec['fix']}\n"
+            )
+    return {"explanation": explanation, "cve": rec, "user": user.get("sub") or user.get("uid"), "model": _nvidia_bot.model if not explanation.startswith("CVE-") else "fallback"}
 
 class RecordEventRequest(BaseModel):
     message: str
@@ -239,16 +251,23 @@ class LlmGenerateRequest(BaseModel):
 
 @router.post("/llm-generate")
 async def llm_generate(req: LlmGenerateRequest, user: Dict = Depends(auth_dependency)):
-    text = ""
-    if getattr(_soc, "available", False) and getattr(_soc, "generator", None):
-        out = _soc.generator(req.prompt, do_sample=True, temperature=0.2, top_p=0.9, max_new_tokens=600)
-        if isinstance(out, list) and out:
-            text = out[0].get("generated_text", "").strip()
+    # Use the new NVIDIA Qwen chatbot for all LLM generation requests
+    try:
+        response = _nvidia_bot.generate_response(req.prompt, stream=False)
+        return {"text": response, "user": user.get("sub") or user.get("uid"), "model": _nvidia_bot.model}
+    except Exception as e:
+        logger.error(f"LLM Generation failed: {e}")
+        # Fallback to local generator if available
+        text = ""
+        if getattr(_soc, "available", False) and getattr(_soc, "generator", None):
+            out = _soc.generator(req.prompt, do_sample=True, temperature=0.2, top_p=0.9, max_new_tokens=600)
+            if isinstance(out, list) and out:
+                text = out[0].get("generated_text", "").strip()
+            else:
+                text = str(out).strip()
         else:
-            text = str(out).strip()
-    else:
-        text = req.prompt
-    return {"text": text, "user": user.get("sub") or user.get("uid")}
+            text = req.prompt
+        return {"text": text, "user": user.get("sub") or user.get("uid"), "fallback": True}
 class PipelineRunRequest(BaseModel):
     message: str
     asset_value: float | None = None
