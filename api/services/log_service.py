@@ -533,12 +533,13 @@ class NVIDIAQwenChatbot:
             return f"Error: {str(e)}"
 
 class SOCReportGenerator:
-    def __init__(self, clf: DistilBERTLogClassifier, attck: MITREAttckMapper):
+    def __init__(self, clf: DistilBERTLogClassifier, attck: MITREAttckMapper, llm_client: Optional['NVIDIAQwenChatbot'] = None):
         self.available = False
         self.generator = None
         self.tokenizer = None
         self.clf = clf
         self.attck = attck
+        self.llm_client = llm_client
         try:
             if _HAS_TRANSFORMERS and BitsAndBytesConfig is not None:
                 use_gpu = bool(torch.cuda.is_available())
@@ -579,14 +580,27 @@ class SOCReportGenerator:
         )
 
     def generate(self, logs: List[str], title: str | None = None):
+        prompt = self._prompt(logs, title)
+        
+        # 1. Try NVIDIA Qwen (Highest Quality)
+        if self.llm_client:
+            try:
+                report = self.llm_client.generate_response(prompt, stream=False)
+                if report and not report.startswith("Error:"):
+                    return {"report": report.strip(), "model": self.llm_client.model}
+            except Exception as e:
+                logger.error(f"NVIDIA SOC Report failed: {e}")
+
+        # 2. Try Local Llama-3 (Fallback)
         if self.available and self.generator:
-            prompt = self._prompt(logs, title)
             out = self.generator(prompt, do_sample=True, temperature=0.2, top_p=0.9)
             if isinstance(out, list) and out:
                 text = out[0].get("generated_text", "")
             else:
                 text = str(out)
             return {"report": text.strip(), "model": "Meta-Llama-3-8B-Instruct"}
+        
+        # 3. Last Resort (Static Fallback)
         return self.fallback(logs, title)
 
     def fallback(self, logs: List[str], title: str | None = None):
@@ -690,9 +704,10 @@ class CVEFetcher:
         }
 
 class CVERAGEngine:
-    def __init__(self, embedder: MiniLMEmbedder):
+    def __init__(self, embedder: MiniLMEmbedder, llm_client: Optional['NVIDIAQwenChatbot'] = None):
         self.embedder = embedder
         self.fetcher = CVEFetcher()
+        self.llm_client = llm_client
         self.records: List[Dict[str,str]] = []
         self.index = None
         self.dim = None
@@ -752,6 +767,43 @@ class CVERAGEngine:
             rec["score"] = float(score)
             results.append(rec)
         return results
+
+    def explain_cve(self, cve_id: str, rec: Dict[str, Any] | None = None) -> str:
+        """Provide an AI-powered explanation for a given CVE."""
+        if not rec:
+            rec = self.fetcher.fetch(cve_id)
+        
+        prompt = (
+            f"Explain the following CVE for a SOC analyst:\n\n"
+            f"ID: {rec['id']}\n"
+            f"Title: {rec['title']}\n"
+            f"Description: {rec['description']}\n"
+            f"CVSS: {rec['cvss']}\n"
+            f"Severity: {rec['severity']}\n"
+            f"Exploitation Method: {rec['method']}\n"
+            f"Fix Recommendation: {rec['fix']}\n\n"
+            f"Provide a concise summary covering:\n"
+            f"- What the vulnerability is\n"
+            f"- Likely exploitation path\n"
+            f"- Operational impact\n"
+            f"- Remediation steps\n"
+        )
+        
+        if self.llm_client:
+            try:
+                explanation = self.llm_client.generate_response(prompt, stream=False)
+                if explanation and not explanation.startswith("Error:"):
+                    return explanation.strip()
+            except Exception as e:
+                logger.error(f"NVIDIA CVE Explanation failed: {e}")
+        
+        # Static Fallback
+        return (
+            f"{rec['id']} ({rec['severity']}): {rec['title']}\n"
+            f"- Summary: {rec['description'][:400]}...\n"
+            f"- CVSS: {rec['cvss']} | Method: {rec['method']}\n"
+            f"- Fix: {rec['fix']}\n"
+        )
 
 class TrendStore:
     def __init__(self, db_path: str):
