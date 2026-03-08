@@ -343,7 +343,6 @@ function bindEvents() {
   bindButton('logSimilarBtn', handleLogSimilar);
   bindButton('logZeroShotBtn', handleLogZeroShot);
   bindButton('refreshAlertsBtn', loadLists);
-  bindButton('refreshTrendsBtn', () => { window.location.reload(); }); // Simple reload for trends for now
 }
 
 function bindButton(id, handler) {
