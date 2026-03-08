@@ -74,7 +74,9 @@
 ### **Accessing the Live Dashboards**
 The project has been deployed via secure tunnels for live access:
 - **Main Command Center (Live)**: [https://rude-times-give.loca.lt](https://rude-times-give.loca.lt)
-- **Analytics Dashboard (Live)**: [https://slow-lemons-drop.loca.lt](https://slow-lemons-drop.loca.lt)
+- **Analytics Dashboard (Live)**: [https://ten-swans-grab.loca.lt](https://ten-swans-grab.loca.lt)
+
+**Tunnel Password**: `2402:3a80:c86:afeb:bc21:b8db:41d4:6e3c` (Enter this when prompted to access the tunnel)
 
 *Note: These links are active as long as the local tunnel is running. If the links expire, run `lt --port 8000` and `lt --port 8502` to regenerate them.*
 
