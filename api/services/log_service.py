@@ -481,8 +481,8 @@ import base64
 
 class NVIDIAQwenChatbot:
     """NVIDIA-powered chatbot using Qwen 3.5 model."""
-    def __init__(self, api_key: str = "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"):
-        self.api_key = api_key
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or os.getenv("NVIDIA_API_KEY", "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")
         self.invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
         self.model = "qwen/qwen3.5-397b-a17b"
 

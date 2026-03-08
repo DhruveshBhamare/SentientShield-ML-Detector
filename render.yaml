@@ -16,6 +16,8 @@ services:
         value: "*" 
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: NVIDIA_API_KEY
+        value: "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"
 
   # 2. Frontend Streamlit Service
   - type: web
