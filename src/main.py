@@ -9,33 +9,55 @@ from typing import Optional, Dict, List
 import logging
 import time
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends, status
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(title="SentientShield-WebAttackPredictor", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Secure Headers Middleware
+class SecureHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+        return response
+
+app.add_middleware(SecureHeadersMiddleware)
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-
 import jwt
 
 # Import NeuralFort framework
-from .neuralfort_api import router as neuralfort_router
-from .routers.predict import router as predict_router
-from .routers.status import router as status_router
-from .routers.dashboard import router as dashboard_router
-from .routers.project import router as project_router
-from .routers.logs import router as logs_router
-from .tasks.scheduler import start_daily_retrain_task
-
-ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "artifacts")
-MODEL_PATH = os.path.join(ARTIFACTS_DIR, "best_model.joblib")
-METADATA_PATH = os.path.join(ARTIFACTS_DIR, "metadata.json")
-PERF_LOG_PATH = os.path.join(ARTIFACTS_DIR, "model_performance_log.csv")
-
-app = FastAPI(title="SentientShield-WebAttackPredictor", version="1.0.0")
+from .api.routers.neuralfort import router as neuralfort_router
+from .api.routers.predict import router as predict_router
+from .api.routers.status import router as status_router
+from .api.routers.dashboard import router as dashboard_router
+from .api.routers.project import router as project_router
+from .api.routers.logs import router as logs_router
+from .api.tasks.scheduler import start_daily_retrain_task
+from .models.loader import load_model_if_needed, get_model, get_metadata
+from .configs.config import (
+    MODEL_PATH, METADATA_PATH, PERF_LOG_PATH, API_LOG_PATH,
+    JWT_SECRET, JWT_ALG, JWT_ISSUER, JWT_AUDIENCE, TRUSTED_ORIGINS
+)
 
 # Mount static files
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -81,23 +103,16 @@ async def neuralfort_page():
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=TRUSTED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Initialize logging
-LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "logs")
-os.makedirs(LOG_DIR, exist_ok=True)
-API_LOG_PATH = os.path.join(LOG_DIR, "api_calls.jsonl")
+os.makedirs(os.path.dirname(API_LOG_PATH), exist_ok=True)
 logging.basicConfig(level=logging.INFO)
 
-# JWT configuration
-JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-prod")
-JWT_ALG = os.getenv("JWT_ALG", "HS256")
-JWT_ISSUER = os.getenv("JWT_ISSUER")
-JWT_AUDIENCE = os.getenv("JWT_AUDIENCE")
 security = HTTPBearer()
 
 # Helper to verify JWT tokens
@@ -214,20 +229,7 @@ class RequestFeatures(BaseModel):
 #
 #     return response
 
-# Lazy-loaded model
-_model = None
-_metadata: Dict = {}
-
-
-def _load_model():
-    global _model, _metadata
-    if _model is not None:
-        return
-    if not os.path.exists(MODEL_PATH) or not os.path.exists(METADATA_PATH):
-        raise FileNotFoundError("Model or metadata not found. Please run training first.")
-    _model = joblib.load(MODEL_PATH)
-    with open(METADATA_PATH, "r", encoding="utf-8") as f:
-        _metadata = json.load(f)
+from .services.model_service import get_model, get_metadata, load_model_if_needed
 
 
 async def _daily_scheduler():
@@ -287,10 +289,10 @@ async def websocket_endpoint(websocket: WebSocket):
     
     # Send initial metrics
     try:
-        _load_model()
+        load_model_if_needed()
         metrics_data = {
             "type": "metrics",
-            "metrics": _metadata.get("metrics", {
+            "metrics": get_metadata().get("metrics", {
                 "accuracy": 0.956,
                 "precision_macro": 0.928,
                 "f1_macro": 0.927
@@ -321,12 +323,12 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.on_event("startup")
 async def startup_event():
     try:
-        _load_model()
+        load_model_if_needed()
     except Exception as e:
         # Defer raising until predict request to not crash startup in environments without model
         print(f"Startup warning: {e}")
     # Start background scheduler
-    # start_daily_retrain_task()
+    asyncio.create_task(start_daily_retrain_task())
     # Start threat data simulator
     asyncio.create_task(_threat_simulator())
 
@@ -334,7 +336,7 @@ async def startup_event():
 @app.post("/predict")
 async def predict(features: RequestFeatures, user: Dict = Depends(auth_dependency)):
     try:
-        _load_model()
+        load_model_if_needed()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -351,27 +353,27 @@ async def predict(features: RequestFeatures, user: Dict = Depends(auth_dependenc
     }
 
     try:
-        proba = _model.predict_proba([row])[0]
+        proba = get_model().predict_proba([row])[0]
         pred_idx = int(proba.argmax())
-        classes = _metadata.get("label_classes", [])
+        classes = get_metadata().get("label_classes", [])
         pred_label = classes[pred_idx] if classes else str(pred_idx)
         prob_map = {classes[i] if i < len(classes) else str(i): float(p) for i, p in enumerate(proba)}
         result = {
             "predicted_label": pred_label,
             "probabilities": prob_map,
-            "model": _metadata.get("best_model"),
+            "model": get_metadata().get("best_model"),
             "confidence": float(max(proba))
         }
     except Exception:
         # Fallback for models without predict_proba
         try:
-            pred_idx = int(_model.predict([row])[0])
-            classes = _metadata.get("label_classes", [])
+            pred_idx = int(get_model().predict([row])[0])
+            classes = get_metadata().get("label_classes", [])
             pred_label = classes[pred_idx] if classes else str(pred_idx)
             result = {
                 "predicted_label": pred_label,
                 "probabilities": {},
-                "model": _metadata.get("best_model"),
+                "model": get_metadata().get("best_model"),
                 "confidence": None
             }
         except Exception as inner:
@@ -398,17 +400,16 @@ async def predict(features: RequestFeatures, user: Dict = Depends(auth_dependenc
 
 @app.get("/status")
 async def status(user: Dict = Depends(auth_dependency)):
-    # Load latest metadata
-    meta = {}
-    if os.path.exists(METADATA_PATH):
-        try:
-            with open(METADATA_PATH, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-        except Exception as e:
-            meta = {"error": f"Failed reading metadata: {e}"}
+    # Load latest metadata using service
+    try:
+        load_model_if_needed()
+        meta = get_metadata()
+    except Exception as e:
+        meta = {"error": f"Failed loading metadata: {e}"}
 
     # Read last perf log entry
     last_log = None
+    from .core.config import PERF_LOG_PATH, MODEL_PATH
     if os.path.exists(PERF_LOG_PATH):
         try:
             with open(PERF_LOG_PATH, "r", encoding="utf-8") as f:

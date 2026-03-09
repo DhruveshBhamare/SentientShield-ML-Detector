@@ -1,37 +1,37 @@
 services:
-  # 1. Backend API Service
+  # SentientShield Backend (FastAPI)
   - type: web
     name: sentientshield-api
-    env: docker
-    plan: free
-    dockerContext: .
-    dockerfilePath: Dockerfile
-    # We explicitly set the port to match the Dockerfile's exposed port
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: PORT
-        value: 8000
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.10.0
       - key: JWT_SECRET
         generateValue: true
+      - key: HF_HUB_MODEL_ID
+        sync: false
       - key: TRUSTED_ORIGINS
-        value: "*" 
-      - key: PYTHONUNBUFFERED
-        value: "1"
+        value: "*" # Change to your final frontend domain in production
       - key: NVIDIA_API_KEY
-        value: "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"
+        sync: false
 
-  # 2. Frontend Streamlit Service
+  # SentientShield Analytics Dashboard (Streamlit)
   - type: web
-    name: sentientshield-dashboard
-    env: docker
-    plan: free
-    dockerContext: .
-    dockerfilePath: Dockerfile
-    # Override the default Uvicorn command to run Streamlit instead
-    # We use the $PORT variable provided by Render
-    dockerCommand: sh -c "streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0"
+    name: sentientshield-analytics
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run src/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
     envVars:
-      - key: API_URL
+      - key: PORT
+        value: 8501
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: API_BASE_URL
         fromService:
-          type: web
           name: sentientshield-api
-          property: url
+          type: web
+          property: host

@@ -1,9 +1,9 @@
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends
-from ..core.security import auth_dependency
+from ...configs.security import auth_dependency
 import os
-from ..services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, CVERAGEngine, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
+from ...services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, CVERAGEngine, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 _clf = DistilBERTLogClassifier()

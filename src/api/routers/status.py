@@ -5,8 +5,8 @@ from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..core.security import auth_dependency
-from ..core.config import PERF_LOG_PATH, METADATA_PATH
+from ...configs.security import auth_dependency
+from ...configs.config import PERF_LOG_PATH, METADATA_PATH
 
 
 router = APIRouter(prefix="/api", tags=["Status"])
@@ -44,7 +44,7 @@ async def dev_token():
     try:
         import time
         import jwt
-        from ..core.config import JWT_SECRET, JWT_ALG
+        from ...configs.config import JWT_SECRET, JWT_ALG
         payload = {"sub": "dev-user", "uid": "dev-user", "exp": int(time.time()) + 3600}
         token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
         return {"token": token}

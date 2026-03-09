@@ -23,7 +23,7 @@ except ImportError:
 
 import faiss
 
-from ..core.config import ROOT_DIR, LOG_DIR
+from ..configs.config import ROOT_DIR, LOG_DIR
 
 # --- Configuration ---
 INTEL_DB_PATH = os.path.join(LOG_DIR, "intelligence.db")

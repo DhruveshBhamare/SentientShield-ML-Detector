@@ -23,8 +23,8 @@ ENV JWT_SECRET="change-me-in-prod" \
     RETRAIN_INTERVAL_SECONDS="86400" \
     PYTHONUNBUFFERED=1
 
-# Expose Uvicorn port
-EXPOSE 8000
+# Expose default port (Render will override)
+EXPOSE 10000
 
-# Start Uvicorn server
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start Uvicorn server with dynamic port pointing to src/main.py
+CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

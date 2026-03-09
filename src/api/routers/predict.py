@@ -4,11 +4,11 @@ from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..core.security import auth_dependency
-from ..core.config import API_LOG_PATH
+from ...configs.security import auth_dependency
+from ...configs.config import API_LOG_PATH
 from ..schemas.common import RequestFeatures
-from ..services.model_service import get_model, get_metadata
-from ..services.intel_service import intel_pipeline
+from ...models.loader import get_model, get_metadata
+from ...services.intel_service import intel_pipeline
 
 
 router = APIRouter(prefix="/api", tags=["Predict"])

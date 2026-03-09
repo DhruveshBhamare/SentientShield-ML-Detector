@@ -5,15 +5,15 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..core.security import auth_dependency
-from ..core.config import (
+from ...configs.security import auth_dependency
+from ...configs.config import (
     ROOT_DIR,
     STATIC_DIR,
     ARTIFACTS_DIR,
     MODEL_PATH,
     METADATA_PATH,
 )
-from ..services.model_service import get_metadata
+from ...models.loader import get_metadata
 
 
 router = APIRouter(prefix="/api/project", tags=["Project"])

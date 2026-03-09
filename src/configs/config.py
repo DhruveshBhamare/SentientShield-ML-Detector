@@ -4,7 +4,7 @@ from typing import List
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 API_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-STATIC_DIR = os.path.join(ROOT_DIR, "frontend", "static")
+STATIC_DIR = os.path.join(ROOT_DIR, "src", "static")
 ARTIFACTS_DIR = os.path.join(ROOT_DIR, "artifacts")
 LOG_DIR = os.path.join(ROOT_DIR, "logs")
 

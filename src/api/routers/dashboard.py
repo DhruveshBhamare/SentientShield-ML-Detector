@@ -4,8 +4,8 @@ import json
 import os
 from typing import Dict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from ..core.security import auth_dependency
-from ..core.config import LOG_DIR
+from ...configs.security import auth_dependency
+from ...configs.config import LOG_DIR
 
 router = APIRouter(prefix="/api", tags=["Dashboard"])
 INTEL_DB_PATH = os.path.join(LOG_DIR, "intelligence.db")

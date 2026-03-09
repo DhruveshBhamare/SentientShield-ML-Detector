@@ -16,7 +16,7 @@ import asyncio
 import json
 import logging
 
-from .neuralfort import (
+from ...services.neuralfort import (
     NeuralFortFramework, get_neuralfort_framework,
     WebsiteActivationManager, SystemComponent, ThreatLevel, ActionType,
     WebsiteRegistration, SystemMetrics, AnomalyEvent, HealingAction

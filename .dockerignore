@@ -1,0 +1,23 @@
+# Docker ignore file
+.git
+.github
+.venv
+venv
+.env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+logs/
+artifacts/*.joblib
+artifacts/*.pkl
+artifacts/*.pt
+artifacts/*.bin
+models/
+.vercel
+node_modules/
+SentientShield-SourceCode.zip
+docs/
+tests/

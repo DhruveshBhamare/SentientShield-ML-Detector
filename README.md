@@ -1,71 +1,53 @@
-# SentientShield-WebAttackPredictor
+# SentientShield AI Cybersecurity Platform
 
-This project builds and deploys a web threat detection model that classifies incoming requests as normal or attacks (SQL Injection, XSS, DDoS, brute force).
+**SentientShield** is an advanced AI-powered web threat detection and autonomous infrastructure resilience system.
 
-## Features
-- Automated preprocessing: imputations, scaling, one-hot encoding, and TF-IDF for text fields.
-- Model comparison: Logistic Regression, Random Forest, and XGBoost.
-- Metrics: accuracy, precision, recall, F1-score, and ROC-AUC (macro, OVR).
-- Deployment: FastAPI `/predict` endpoint returning label and probabilities.
+## 🚀 Production Deployment (Quick Start)
 
-## Dataset Schema
-Expected CSV columns:
-- `request_type` (str), `headers` (str), `payload_size` (float), `response_time` (float), `ip_reputation` (float), `url` (str), `user_agent` (str), `anomaly_score` (float), `label` (str)
+This project is optimized for deployment using **GitHub + HuggingFace Hub + Render**.
 
-If `data/web_threats.csv` is not found, a synthetic dataset is generated at `data/sample_web_threats.csv` for demonstration.
+### 1. Large Model Hosting (HuggingFace)
+To keep the repository size small (< 300MB), the 13GB of ML models are hosted on HuggingFace Hub.
+1. Create a repository on [HuggingFace Hub](https://huggingface.co/new) (e.g., `your-username/SentientShield-ML-Model`).
+2. Upload the following files to your HF repo:
+   - `best_model.joblib`
+   - `metadata.json`
+3. Set the environment variable `HF_HUB_REPO_ID` to your repository ID in the Render dashboard.
 
-## Usage
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Train models and save the best:
-   ```bash
-   python scripts/train.py
-   ```
-3. Launch API:
-   ```bash
-   uvicorn api.main:app --reload --port 8000
-   ```
-4. Example prediction:
-   ```bash
-   curl -X POST http://localhost:8000/predict \
-     -H "Content-Type: application/json" \
-     -d '{
-       "request_type": "POST",
-       "headers": "User-Agent: Mozilla/5.0; Accept: application/json",
-       "payload_size": 1024,
-       "response_time": 180,
-       "ip_reputation": 35,
-       "url": "/login?q=index",
-       "user_agent": "Mozilla/5.0",
-       "anomaly_score": 0.8
-     }'
-   ```
+### 2. Deployment to Render
+The project includes a `render.yaml` blueprint for automatic deployment.
+1. Connect your GitHub repository to [Render](https://render.com/).
+2. Render will detect `render.yaml` and create two services:
+   - **sentientshield-api**: FastAPI backend.
+   - **sentientshield-analytics**: Streamlit dashboard.
+3. Configure the following **Environment Variables** on Render:
+   - `HF_HUB_REPO_ID`: Your HuggingFace model repo ID.
+   - `JWT_SECRET`: A secure random string for authentication.
+   - `NVIDIA_API_KEY`: Your NVIDIA AI Foundation API key.
+   - `TRUSTED_ORIGINS`: Set to your production domain or `*`.
 
-## Notes
-- For best results, replace the synthetic dataset with your real logs.
-- Adjust TF-IDF `max_features` and n-gram ranges for larger datasets.
-- If XGBoost is heavy, you can disable it or tweak parameters.
+### 3. Local Deployment (Docker)
+Run the entire stack locally with a single command:
+```bash
+docker-compose up --build
+```
+- **Main Dashboard**: `http://localhost:8000/static/premium.html`
+- **Analytics Dashboard**: `http://localhost:8501`
 
 ---
 
-## Dashboards
-- Overview: `http://127.0.0.1:8000/static/premium.html`
-- NeuralFort: `http://127.0.0.1:8000/static/neuralfort_dashboard.html`
-- Model: `http://127.0.0.1:8000/static/dashboard.html`
+## 🛠️ Features
+- **AI-Powered Threat Detection**: Real-time identification of web attacks (SQLi, XSS, DDoS) using XGBoost.
+- **NeuralFort Autonomous Resilience**: Self-healing infrastructure that monitors and mitigates system anomalies.
+- **SentientBot Copilot**: Interactive security assistant with RAG-based knowledge retrieval.
+- **Automated SOC Reports**: Generates professional incident reports using LLMs.
 
-## Frontend Features
-- Layout toggle between sidebar and topbar (persists via `localStorage`).
-- Polished click effects (ripple/pop/wiggle/pulse/glow).
-- Realtime feed via WebSocket at `/api/ws/realtime` with auto‑retry.
-- Security Copilot chat, anomalies/healing/LLM insights panels.
+## 📂 Project Structure
+- `api/`: FastAPI backend implementation.
+- `frontend/static/`: Cinematic UI with particle animations.
+- `streamlit_app.py`: Real-time analytics dashboard.
+- `scripts/`: Utilities for training, retraining, and data generation.
+- `.github/workflows/`: CI/CD automation for production deployment.
 
-## Auth & Settings
-- Open the Settings panel in any dashboard and paste a JWT.
-- The token is stored locally and automatically sent as `Authorization: Bearer` in all `/api` requests.
-
-## Run Server for Dashboards
-```bash
-python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
-```
+## 📄 License
+This project is licensed under the MIT License.
