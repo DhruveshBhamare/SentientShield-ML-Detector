@@ -1,58 +1,51 @@
-name: Production CI/CD Pipeline
+name: Deploy SentientShield
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  build:
     name: Build, Test, and Deploy
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout repository
-      - name: Step 1: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Python
-      - name: Step 2: Setup Python 3.10
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
           cache: 'pip'
 
-      # Step 3: Install dependencies
-      - name: Step 3: Install Dependencies
+      - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          pip3 install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
 
-      # Step 4: Install pytest
-      - name: Step 4: Install Pytest
-        run: pip3 install pytest pytest-asyncio httpx
-
-      # Step 5: Run tests
-      - name: Step 5: Run Tests
+      - name: Run tests
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          # Skip model-heavy tests if models are missing
-          # We run pytest and it will skip tests that fail model loading gracefully
           pytest src/tests/ -v
 
-      # Step 6: Build Docker container
-      - name: Step 6: Build Docker Container
+      - name: Build Docker Image
         run: |
           docker compose -f docker/docker-compose.yml build
-          docker compose -f docker/docker-compose.yml up -d
 
-      # Step 7: Deploy
-      - name: Step 7: Deploy to Production (Render)
+      - name: Deploy to Production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         run: |
-          # Wait for container to settle and run healthcheck before final trigger
+          # Start container for final healthcheck
+          docker compose -f docker/docker-compose.yml up -d
           sleep 15
-          python3 scripts/healthcheck.py
+          python scripts/healthcheck.py
+          # Trigger Render deployment
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
         env:
           PORT: 10000
