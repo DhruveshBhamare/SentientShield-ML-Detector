@@ -7,64 +7,52 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Build and Test
+  build-and-deploy:
+    name: Build, Test, and Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      # Step 1: Checkout repository
+      - name: Step 1: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      # Step 2: Setup Python
+      - name: Step 2: Setup Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Install Dependencies
+      # Step 3: Install dependencies
+      - name: Step 3: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip3 install -r requirements.txt
 
-      - name: Set Permissions for Scripts
-        run: chmod +x scripts/*.py scripts/*.bat 2>/dev/null || true
+      # Step 4: Install pytest
+      - name: Step 4: Install Pytest
+        run: pip3 install pytest pytest-asyncio httpx
 
-      - name: Run Tests
+      # Step 5: Run tests
+      - name: Step 5: Run Tests
         run: |
-          # Skip tests requiring large models if not available
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest src/tests/
+          # Skip model-heavy tests if models are missing
+          # We run pytest and it will skip tests that fail model loading gracefully
+          pytest src/tests/ -v
 
-  deploy:
-    name: Production Deployment
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python for Healthcheck
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Build and Start Container
+      # Step 6: Build Docker container
+      - name: Step 6: Build Docker Container
         run: |
-          # Use 'docker compose' instead of 'docker-compose' to avoid Exit 127
           docker compose -f docker/docker-compose.yml build
           docker compose -f docker/docker-compose.yml up -d
 
-      - name: Wait for Service
-        run: sleep 15
-
-      - name: Run Healthcheck
+      # Step 7: Deploy
+      - name: Step 7: Deploy to Production (Render)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         run: |
-          pip install requests
+          # Wait for container to settle and run healthcheck before final trigger
+          sleep 15
           python3 scripts/healthcheck.py
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
         env:
           PORT: 10000
-
-      - name: Deploy to Production (Render)
-        if: success()
-        run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
