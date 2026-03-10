@@ -28,32 +28,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      # Step 4 – Ensure pytest is installed
-      - name: Step 4: Ensure pytest is installed
-        run: |
           pip install pytest pytest-asyncio httpx
 
-      # Step 5 – Run tests
-      - name: Step 5: Run tests
+      # Step 4 – Run tests
+      - name: Step 4: Run tests
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          # Skip model-heavy tests automatically via pytest-skipif in test files
+          # Tests will automatically skip model-heavy checks if models are missing
           pytest src/tests/ -v
 
-      # Step 6 – Build Docker container and Deploy
-      - name: Step 6: Build Docker container
+      # Step 5 – Build Docker container
+      - name: Step 5: Build Docker container
         run: |
           docker compose -f docker/docker-compose.yml build
 
-      - name: Final Production Deployment
+      # Step 6 – Deploy
+      - name: Step 6: Deploy to Production (Render)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         run: |
-          # Verify container stability before triggering production
+          # Start container locally for a final smoke test/healthcheck
           docker compose -f docker/docker-compose.yml up -d
           sleep 15
           python scripts/healthcheck.py
-          # Deploy to Render
+          # Final trigger to production hosting
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
         env:
           PORT: 10000
