@@ -9,43 +9,51 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build, Test, and Deploy
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # Step 1 – Checkout repository
+      - name: Step 1: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      # Step 2 – Setup Python
+      - name: Step 2: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: 'pip'
 
-      - name: Install dependencies
+      # Step 3 – Install dependencies
+      - name: Step 3: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # Step 4 – Ensure pytest is installed
+      - name: Step 4: Ensure pytest is installed
+        run: |
           pip install pytest pytest-asyncio httpx
 
-      - name: Run tests
+      # Step 5 – Run tests
+      - name: Step 5: Run tests
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
+          # Skip model-heavy tests automatically via pytest-skipif in test files
           pytest src/tests/ -v
 
-      - name: Build Docker Image
+      # Step 6 – Build Docker container and Deploy
+      - name: Step 6: Build Docker container
         run: |
           docker compose -f docker/docker-compose.yml build
 
-      - name: Deploy to Production
+      - name: Final Production Deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         run: |
-          # Start container for final healthcheck
+          # Verify container stability before triggering production
           docker compose -f docker/docker-compose.yml up -d
           sleep 15
           python scripts/healthcheck.py
-          # Trigger Render deployment
+          # Deploy to Render
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
         env:
           PORT: 10000
