@@ -1111,7 +1111,7 @@ class SecurityKnowledgeBase:
             if corpus:
                 if _HAS_ST:
                     try:
-                        self.st_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+                        self.st_model = SentenceTransformer(get_model_path("sentence-transformers/all-MiniLM-L6-v2"))
                         import numpy as np
                         self.embeddings = self.st_model.encode(corpus, normalize_embeddings=True)
                     except Exception:
@@ -1204,6 +1204,7 @@ class SecurityKnowledgeBase:
             "suggested_steps": combined_steps
         }
 
+from ..models.loader import get_model_path
 from .log_service import NVIDIAQwenChatbot
 
 class NeuralFortFramework:

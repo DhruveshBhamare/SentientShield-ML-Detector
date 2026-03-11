@@ -9,17 +9,7 @@ import re
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Base directory for models
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-MODELS_DIR = os.path.join(BASE_DIR, "models")
-
-def get_model_path(model_id: str) -> str:
-    """Resolve model path from local models directory or fallback to model_id."""
-    # Check if model_id is a path relative to MODELS_DIR
-    local_path = os.path.join(MODELS_DIR, model_id)
-    if os.path.exists(local_path):
-        return local_path
-    return model_id
+from ..models.loader import get_model, get_metadata, get_model_path
 
 try:
     from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig, AutoModelForCausalLM
