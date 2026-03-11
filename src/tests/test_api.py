@@ -21,5 +21,6 @@ def test_predict_endpoint_exists():
         "ip_reputation": 99,
         "anomaly_score": 0.01
     })
-    # If models are missing, it might 500, but the route exists
-    assert response.status_code in [200, 401, 500]
+    # If models are missing, it might 500, but the route exists. 
+    # It might return 401 or 403 because we don't provide a token.
+    assert response.status_code in [200, 401, 403, 500]

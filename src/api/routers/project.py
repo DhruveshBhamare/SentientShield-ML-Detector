@@ -134,3 +134,13 @@ async def project_requirements(user: Dict = Depends(auth_dependency)):
         return {"packages": packages, "user": user.get("sub") or user.get("uid")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/retrain")
+async def retrain(user: Dict = Depends(auth_dependency)):
+    try:
+        from scripts.retrain import daily_retrain
+        result = daily_retrain()
+        return {"status": "success", "result": result, "user": user.get("sub") or user.get("uid")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

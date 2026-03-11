@@ -99,7 +99,7 @@ def generate_sample_dataset(path: str, n: int = 800) -> None:
             "url": url,
             "user_agent": user_agent,
             "anomaly_score": float(anomaly_score),
-            "label": label,
+            "attack_type": label,
         })
 
     df = pd.DataFrame(rows)

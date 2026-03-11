@@ -1204,7 +1204,7 @@ class SecurityKnowledgeBase:
             "suggested_steps": combined_steps
         }
 
-from .services.log_service import NVIDIAQwenChatbot
+from .log_service import NVIDIAQwenChatbot
 
 class NeuralFortFramework:
     """Main NeuralFort framework orchestrator"""

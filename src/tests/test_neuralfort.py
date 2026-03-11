@@ -3,21 +3,30 @@
 Test script for NeuralFort AI-Based Intelligent Infrastructure Resilience Framework
 """
 
+import pytest
 import requests
 import json
 import time
 import sys
 
+def is_server_up(url):
+    try:
+        response = requests.get(f"{url}/health", timeout=1)
+        return response.status_code == 200
+    except:
+        return False
+
+BASE_URL = "http://localhost:8000/neuralfort"
+
+@pytest.mark.skipif(not is_server_up(BASE_URL), reason="NeuralFort server is not running")
 def test_neuralfort_api():
-    """Test NeuralFort API endpoints"""
-    base_url = "http://localhost:8000/neuralfort"
     
     print("🧠 Testing NeuralFort AI Framework...")
     
     # Test 1: Health check
     print("\n1. Testing health check...")
     try:
-        response = requests.get(f"{base_url}/health")
+        response = requests.get(f"{BASE_URL}/health")
         if response.status_code == 200:
             print("✅ Health check passed")
             print(f"Response: {response.json()}")
@@ -37,7 +46,7 @@ def test_neuralfort_api():
     }
     
     try:
-        response = requests.post(f"{base_url}/website/register", json=test_website)
+        response = requests.post(f"{BASE_URL}/website/register", json=test_website)
         if response.status_code == 200:
             result = response.json()
             print("✅ Website registration successful")
@@ -59,7 +68,7 @@ def test_neuralfort_api():
     }
     
     try:
-        response = requests.post(f"{base_url}/activate", json=activation_data)
+        response = requests.post(f"{BASE_URL}/activate", json=activation_data)
         if response.status_code == 200:
             print("✅ Framework activation successful")
             print(f"Response: {response.json()}")
@@ -74,7 +83,7 @@ def test_neuralfort_api():
     # Test 4: Framework status
     print("\n4. Testing framework status...")
     try:
-        response = requests.get(f"{base_url}/status")
+        response = requests.get(f"{BASE_URL}/status")
         if response.status_code == 200:
             print("✅ Framework status retrieved")
             status = response.json()
@@ -90,7 +99,7 @@ def test_neuralfort_api():
     # Test 5: Metrics
     print("\n5. Testing metrics retrieval...")
     try:
-        response = requests.get(f"{base_url}/metrics")
+        response = requests.get(f"{BASE_URL}/metrics")
         if response.status_code == 200:
             print("✅ Metrics retrieved successfully")
             metrics = response.json()
@@ -107,7 +116,7 @@ def test_neuralfort_api():
     # Test 6: LLM Insights
     print("\n6. Testing LLM insights...")
     try:
-        response = requests.get(f"{base_url}/llm/insights")
+        response = requests.get(f"{BASE_URL}/llm/insights")
         if response.status_code == 200:
             print("✅ LLM insights retrieved")
             insights = response.json()

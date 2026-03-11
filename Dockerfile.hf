@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Grant execution permissions to the start script
-RUN chmod +x start.sh
+RUN chmod +x docker/start.sh
 
 # Create a non-root user (often required by HF Spaces)
 RUN useradd -m -u 1000 user
@@ -27,4 +27,4 @@ ENV HOME=/home/user \
 EXPOSE 7860
 
 # Run the wrapper script
-CMD ["./start.sh"]
+CMD ["./docker/start.sh"]
