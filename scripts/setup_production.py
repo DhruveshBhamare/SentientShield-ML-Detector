@@ -29,7 +29,13 @@ def setup():
     if not os.path.exists(dataset_path):
         logger.info("Dataset missing. Generating synthetic production dataset...")
         try:
-            from scripts.generate_dataset import generate
+            # Add current directory to path for script execution or module
+            sys.path.append(root_dir)
+            try:
+                from scripts.generate_dataset import generate
+            except ImportError:
+                from generate_dataset import generate
+            
             generate(n_total=50000)
             logger.info("Dataset generated successfully.")
         except Exception as e:
@@ -43,7 +49,11 @@ def setup():
     if not os.path.exists(model_path):
         logger.info("Base model missing. Training initial XGBoost model...")
         try:
-            from scripts.train import main as train_main
+            try:
+                from scripts.train import main as train_main
+            except ImportError:
+                from train import main as train_main
+                
             train_and_evaluate = train_main # alias for logging consistency if needed
             train_and_evaluate()
             logger.info("Initial model training complete.")

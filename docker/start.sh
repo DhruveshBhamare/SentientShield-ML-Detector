@@ -2,6 +2,7 @@
 
 # 0. Initialize production environment (directories, dataset, model)
 echo "Initializing Production Environment..."
+export PYTHONPATH=$PYTHONPATH:.
 python -m scripts.setup_production
 
 # 1. Start the FastAPI Backend in the background

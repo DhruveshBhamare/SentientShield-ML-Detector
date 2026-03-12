@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Set PYTHONPATH to include current directory
+ENV PYTHONPATH="/app"
+
 # Initialize production environment
 RUN python -m scripts.setup_production
 
