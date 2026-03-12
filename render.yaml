@@ -8,6 +8,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+      - key: PYTHONPATH
+        value: "."
       - key: JWT_SECRET
         generateValue: true
       - key: HF_HUB_MODEL_ID
@@ -30,6 +32,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+      - key: PYTHONPATH
+        value: "."
       - key: API_URL
         fromService:
           name: sentientshield-api
@@ -45,6 +49,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+      - key: PYTHONPATH
+        value: "."
       - key: NVIDIA_API_KEY
         sync: false
       - key: HF_TOKEN
