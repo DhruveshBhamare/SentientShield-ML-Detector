@@ -26,6 +26,34 @@ This is the easiest way to deploy machine learning demos for free.
 
 ---
 
+## 🤗 HuggingFace Hub Synchronization
+
+SentientShield uses the HuggingFace Hub as a persistent remote store for machine learning models. This ensures that your model state is preserved even if your Render or Docker container is restarted.
+
+### 1. Create a HuggingFace Model Repository
+1.  Log in to [huggingface.co](https://huggingface.co/).
+2.  Click **New** -> **Model**.
+3.  Set the name (e.g., `sentientshield-ml-model`) and visibility (Private is recommended if using sensitive data).
+
+### 2. Generate a Write Token
+1.  Go to **Settings** -> **Access Tokens**.
+2.  Click **New token**.
+3.  Name it `SentientShield-Write` and set the Role to **Write**.
+4.  Copy the token (this is your `HF_TOKEN`).
+
+### 3. Configure Environment Variables
+Add the following variables to your Render/Docker/HF Space environment:
+
+*   `HF_HUB_REPO_ID`: Your repository ID (e.g., `username/sentientshield-ml-model`).
+*   `HF_TOKEN`: The write token you generated.
+
+### 4. Automatic Synchronization
+Once configured:
+- **On Startup**: The system will automatically download `best_model.joblib` and `metadata.json` from your repo if they aren't found locally.
+- **After Retraining**: Every time the [daily_retrain](file:///c:/Users/Dhruv/Documents/Projectss/SentientShield-ML-Detector/scripts/retrain.py) task completes successfully, it will push the updated model and metadata back to your HuggingFace repository.
+
+---
+
 ### Option 2: Railway.app (Easiest Full-Stack)
 Railway is a robust alternative to Render that often handles Docker configurations better.
 
