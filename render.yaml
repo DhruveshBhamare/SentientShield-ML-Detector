@@ -14,6 +14,8 @@ services:
         generateValue: true
       - key: HF_HUB_MODEL_ID
         sync: false
+      - key: HF_TOKEN
+        sync: false
       - key: TRUSTED_ORIGINS
         value: "*" # Change to your final frontend domain in production
       - key: NVIDIA_API_KEY
@@ -30,7 +32,7 @@ services:
         value: 8501
       - key: PYTHON_VERSION
         value: 3.10.0
-      - key: API_BASE_URL
+      - key: API_URL
         fromService:
           name: sentientshield-api
           type: web

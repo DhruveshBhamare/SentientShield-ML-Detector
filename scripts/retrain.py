@@ -149,6 +149,29 @@ def daily_retrain() -> Dict[str, Any]:
         with open(PERF_LOG_PATH, "a", encoding="utf-8") as f:
             f.write(",".join(map(str, row)) + "\n")
 
+    # --- PERMANENT DEPLOYMENT SYNC (HF HUB) ---
+    hf_repo = os.getenv("HF_HUB_REPO_ID")
+    hf_token = os.getenv("HF_TOKEN")
+    if hf_repo and hf_token:
+        try:
+            from huggingface_hub import HfApi
+            api = HfApi(token=hf_token)
+            api.upload_file(
+                path_or_fileobj=MODEL_PATH,
+                path_in_repo="best_model.joblib",
+                repo_id=hf_repo,
+                repo_type="model"
+            )
+            api.upload_file(
+                path_or_fileobj=METADATA_PATH,
+                path_in_repo="metadata.json",
+                repo_id=hf_repo,
+                repo_type="model"
+            )
+            print(f"[Permanent Deployment] Successfully synced retrained model to {hf_repo}")
+        except Exception as sync_err:
+            print(f"[Permanent Deployment] HF Sync failed: {sync_err}")
+
     return {"active_changed": active_changed, "metrics": best_metrics, "best_model": best_model_name}
 
 
