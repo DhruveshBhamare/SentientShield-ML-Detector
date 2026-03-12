@@ -344,7 +344,7 @@ function bindEvents() {
   bindButton('logZeroShotBtn', handleLogZeroShot);
   bindButton('refreshAlertsBtn', loadLists);
   bindButton('batchProcessBtn', () => handleBatchProcess());
-  bindButton('demo8LogsBtn', run8LogsDemo);
+  bindButton('demo9LogsBtn', run9LogsDemo);
 }
 
 function bindButton(id, handler) {
@@ -418,7 +418,7 @@ async function handleBatchProcess(customLogs = null) {
   }
 }
 
-function run8LogsDemo() {
+function run9LogsDemo() {
   const sampleLogs = [
     "SELECT * FROM users WHERE id = 1 OR 1=1; --",
     "<script>alert('XSS_ATTACK_DETECTED')</script>",
@@ -427,7 +427,8 @@ function run8LogsDemo() {
     "Your account has been suspended. Click here to verify: http://secure-sentient-shield.com/login",
     "Suspicious outbound connection to 45.23.11.2 port 4444 (Reverse Shell pattern)",
     "System health check: All components operational. Memory usage: 45%",
-    "Insider Threat Alert: Unauthorized access to sensitive financial data by user 'marketing_assistant' at 3 AM"
+    "Insider Threat Alert: Unauthorized access to sensitive financial data by user 'marketing_assistant' at 3 AM",
+    "Ransomware Activity: Mass file encryption detected on /shared/finance_records. AES key exchange observed to 103.45.12.9"
   ];
   const el = document.getElementById('batchLogs');
   if (el) el.value = sampleLogs.join('\n');

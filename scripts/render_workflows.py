@@ -80,7 +80,7 @@ if __name__ == "__main__":
         print("Starting Render Workflow Runner...")
         app.start()
     else:
-        # If run directly locally, process 8 sample logs to demonstrate
+        # If run directly locally, process 9 sample logs to demonstrate
         sample_logs = [
             "SELECT * FROM users WHERE id = 1 OR 1=1; --",
             "<script>alert('XSS_ATTACK_DETECTED')</script>",
@@ -89,16 +89,17 @@ if __name__ == "__main__":
             "Your account has been suspended. Click here to verify: http://secure-sentient-shield.com/login",
             "Suspicious outbound connection to 45.23.11.2 port 4444 (Reverse Shell pattern)",
             "System health check: All components operational. Memory usage: 45%",
-            "Insider Threat Alert: Unauthorized access to sensitive financial data by user 'marketing_assistant' at 3 AM"
+            "Insider Threat Alert: Unauthorized access to sensitive financial data by user 'marketing_assistant' at 3 AM",
+            "Ransomware Activity: Mass file encryption detected on /shared/finance_records. AES key exchange observed to 103.45.12.9"
         ]
         
         print("\n" + "="*50)
-        print("SENTIENT SHIELD - LOG PROCESSING DEMO (8 LOGS)")
+        print("SENTIENT SHIELD - LOG PROCESSING DEMO (9 LOGS)")
         print("="*50 + "\n")
         
         pipeline = get_pipeline()
         for i, log in enumerate(sample_logs, 1):
-            print(f"[{i}/8] Processing: {log}")
+            print(f"[{i}/9] Processing: {log}")
             res = pipeline.run(log, soc_report=False)
             print(f"    - Severity: {res['severity']['label'].upper()} (Score: {res['severity']['score']:.2f})")
             print(f"    - Threat:   {res['threat_type']['label'].upper()}")
