@@ -73,7 +73,7 @@ async def startup_event():
     logging.basicConfig(level=logging.INFO)
     
     try:
-        load_model_if_needed()
+        asyncio.create_task(asyncio.to_thread(load_model_if_needed))
     except Exception as e:
         print(f"Startup warning: {e}")
     
