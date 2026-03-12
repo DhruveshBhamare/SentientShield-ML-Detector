@@ -10,7 +10,7 @@ def setup():
     logger.info("Starting Production Setup for SentientShield...")
     
     # 1. Define required directories
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_dir = os.path.join(root_dir, "data")
     artifacts_dir = os.path.join(root_dir, "artifacts")
     models_dir = os.path.join(root_dir, "models")
@@ -43,11 +43,12 @@ def setup():
     if not os.path.exists(model_path):
         logger.info("Base model missing. Training initial XGBoost model...")
         try:
-            from scripts.train import train_and_evaluate
+            from scripts.train import main as train_main
+            train_and_evaluate = train_main # alias for logging consistency if needed
             train_and_evaluate()
             logger.info("Initial model training complete.")
         except Exception as e:
-            logger.warn(f"Failed to train initial model: {e}. App will attempt HF download on startup.")
+            logger.warning(f"Failed to train initial model: {e}. App will attempt HF download on startup.")
     else:
         logger.info("Base model already exists.")
 
