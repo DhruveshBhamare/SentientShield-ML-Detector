@@ -41,7 +41,7 @@ services:
           property: host
 
   # SentientShield Workflows (Background Processing)
-  - type: workflow
+  - type: worker
     name: sentientshield-workflows
     env: python
     buildCommand: pip install -r requirements.txt && export PYTHONPATH=$PYTHONPATH:. && python -m scripts.setup_production
