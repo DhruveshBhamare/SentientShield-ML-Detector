@@ -22,8 +22,10 @@ The project includes a `render.yaml` blueprint for automatic deployment.
    - **sentientshield-analytics**: Streamlit dashboard.
 3. Configure the following **Environment Variables** on Render:
    - `HF_HUB_REPO_ID`: Your HuggingFace model repo ID.
+   - `HF_TOKEN`: (Optional) Required to sync retrained models back to HuggingFace.
    - `JWT_SECRET`: A secure random string for authentication.
    - `NVIDIA_API_KEY`: Your NVIDIA AI Foundation API key.
+   - `NVIDIA_MODEL`: Set to `qwen/qwen3.5-397b-a17b` (default).
    - `TRUSTED_ORIGINS`: Set to your production domain or `*`.
 
 ### 3. Local Deployment (Docker)
@@ -38,9 +40,9 @@ docker-compose up --build
 
 ## 🛠️ Features
 - **AI-Powered Threat Detection**: Real-time identification of web attacks (SQLi, XSS, DDoS) using XGBoost.
+- **SentientBot 2.0 (Powered by NVIDIA Qwen 3.5)**: Interactive security co-pilot with "Thinking" reasoning capabilities and a 16k token context window.
 - **NeuralFort Autonomous Resilience**: Self-healing infrastructure that monitors and mitigates system anomalies.
-- **SentientBot Copilot**: Interactive security assistant with RAG-based knowledge retrieval.
-- **Automated SOC Reports**: Generates professional incident reports using LLMs.
+- **Automated SOC Reports**: Generates professional incident reports using state-of-the-art LLMs.
 
 ## 📂 Project Structure
 - `api/`: FastAPI backend implementation.
