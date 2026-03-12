@@ -7,6 +7,7 @@ import json
 # --- Configuration ---
 API = os.getenv("API_URL", "http://127.0.0.1:8000")
 TOKEN = os.getenv("DEV_TOKEN", "")
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", API).rstrip("/")
 
 def auth_headers():
     if TOKEN:
@@ -230,9 +231,9 @@ st.markdown("""
         <span>🛡️</span> SentientShield
     </div>
     <div class="navbar-menu">
-        <a href="http://localhost:8000/static/neuralfort_dashboard.html" target="_blank">Dashboard</a>
+        <a href="{PUBLIC_BASE_URL}/static/neuralfort_dashboard.html" target="_blank">Dashboard</a>
         <a href="#" class="active">Threat Intel</a>
-        <a href="http://localhost:8000/static/premium.html" target="_blank">Overview</a>
+        <a href="{PUBLIC_BASE_URL}/static/premium.html" target="_blank">Overview</a>
         <a href="#">Reports</a>
         <a href="#">Settings</a>
     </div>
@@ -400,6 +401,6 @@ st.markdown('</div>', unsafe_allow_html=True) # Close max-width container
 # Sidebar for extra navigation
 with st.sidebar:
     st.markdown("### Navigation")
-    st.page_link("http://127.0.0.1:8000/static/neuralfort_dashboard.html", label="Live Dashboard", icon=":material/dashboard:")
-    st.page_link("http://127.0.0.1:8000/static/premium.html", label="Intro UI", icon=":material/home:")
+    st.page_link(f"{PUBLIC_BASE_URL}/static/neuralfort_dashboard.html", label="Live Dashboard", icon=":material/dashboard:")
+    st.page_link(f"{PUBLIC_BASE_URL}/static/premium.html", label="Intro UI", icon=":material/home:")
     st.markdown("---")
