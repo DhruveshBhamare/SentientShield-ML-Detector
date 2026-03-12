@@ -20,6 +20,8 @@ services:
         value: "*" # Change to your final frontend domain in production
       - key: NVIDIA_API_KEY
         sync: false
+      - key: NVIDIA_MODEL
+        value: "qwen/qwen3.5-397b-a17b"
 
   # SentientShield Analytics Dashboard (Streamlit)
   - type: web

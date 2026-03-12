@@ -476,9 +476,9 @@ import base64
 class NVIDIAQwenChatbot:
     """NVIDIA-powered chatbot using Qwen 3.5 model."""
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("NVIDIA_API_KEY", "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")
+        self.api_key = api_key or os.getenv("NVIDIA_API_KEY", "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")
         self.invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
-        self.model = "qwen/qwen3.5-397b-a17b"
+        self.model = os.getenv("NVIDIA_MODEL", "qwen/qwen3.5-397b-a17b")
 
     def generate_response(self, prompt: str, stream: bool = False):
         headers = {
@@ -489,7 +489,7 @@ class NVIDIAQwenChatbot:
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 4096,
+            "max_tokens": 16384,
             "temperature": 0.60,
             "top_p": 0.95,
             "top_k": 20,
