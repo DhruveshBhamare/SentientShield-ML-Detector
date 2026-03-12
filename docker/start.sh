@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 0. Initialize production environment (directories, dataset, model)
+echo "Initializing Production Environment..."
+python -m scripts.setup_production
+
 # 1. Start the FastAPI Backend in the background
 echo "Starting FastAPI Backend..."
 # We use nohup to keep it running, and redirect logs

@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Initialize production environment
-RUN python scripts/setup_production.py
+RUN python -m scripts.setup_production
 
 # Environment defaults (override at runtime)
 ENV JWT_SECRET="change-me-in-prod" \
