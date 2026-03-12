@@ -150,7 +150,7 @@ def daily_retrain() -> Dict[str, Any]:
             f.write(",".join(map(str, row)) + "\n")
 
     # --- PERMANENT DEPLOYMENT SYNC (HF HUB) ---
-    hf_repo = os.getenv("HF_HUB_REPO_ID")
+    hf_repo = os.getenv("HF_HUB_REPO_ID") or os.getenv("HF_HUB_MODEL_ID")
     hf_token = os.getenv("HF_TOKEN")
     if hf_repo and hf_token:
         try:
