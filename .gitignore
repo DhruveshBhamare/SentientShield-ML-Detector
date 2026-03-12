@@ -152,7 +152,8 @@ cython_debug/
 .vscode/
 
 # Project-specific ignores
-models/
+/models/
+/sentientshield/
 artifacts/*.joblib
 artifacts/*.pkl
 artifacts/*.pt
