@@ -9,19 +9,6 @@ from typing import List, Dict
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from render_sdk import Workflows, Retry
-from src.services.log_service import (
-    DistilBERTLogClassifier, 
-    MiniLMEmbedder, 
-    InMemoryVectorIndex, 
-    MITREAttckMapper, 
-    ZeroShotThreatClassifier,
-    CVERAGEngine,
-    RiskScoringEngine,
-    SOCReportGenerator,
-    PipelineEngine,
-    NVIDIAQwenChatbot,
-    TrendStore
-)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +18,20 @@ logger = logging.getLogger("SentientShieldWorkflow")
 app = Workflows()
 
 def get_pipeline():
-    """Helper to initialize the full security pipeline."""
+    from src.services.log_service import (
+        DistilBERTLogClassifier,
+        MiniLMEmbedder,
+        InMemoryVectorIndex,
+        MITREAttckMapper,
+        ZeroShotThreatClassifier,
+        CVERAGEngine,
+        RiskScoringEngine,
+        SOCReportGenerator,
+        PipelineEngine,
+        NVIDIAQwenChatbot,
+        TrendStore,
+    )
+
     clf = DistilBERTLogClassifier()
     embedder = MiniLMEmbedder()
     index = InMemoryVectorIndex(embedder)
@@ -78,7 +78,12 @@ if __name__ == "__main__":
     # If RENDER is set, start the task registration and runner process
     if os.getenv("RENDER"):
         print("Starting Render Workflow Runner...")
-        app.start()
+        if os.getenv("RENDER_SDK_MODE"):
+            app.start()
+        else:
+            while True:
+                import time
+                time.sleep(60)
     else:
         # If run directly locally, process 9 sample logs to demonstrate
         sample_logs = [
