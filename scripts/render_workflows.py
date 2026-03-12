@@ -104,7 +104,7 @@ if __name__ == "__main__":
             print(f"    - Severity: {res['severity']['label'].upper()} (Score: {res['severity']['score']:.2f})")
             print(f"    - Threat:   {res['threat_type']['label'].upper()}")
             if res['attck_mapping']:
-                print(f"    - MITRE:    {res['attck_mapping'][0]['technique_name']} ({res['attck_mapping'][0]['technique_id']})")
+                print(f"    - MITRE:    {res['attck_mapping']['technique_name']} ({res['attck_mapping']['technique_id']})")
             print("-" * 30)
 
         print("\nDemo complete. (To register tasks on Render, ensure RENDER=true)")

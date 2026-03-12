@@ -1309,15 +1309,15 @@ class PipelineEngine:
     def run(self, message: str, asset_value: float | None = None, ingest: bool = True, soc_report: bool = False, title: str | None = None):
         sev, s_score = self.clf.classify_severity(message)
         thr, t_score = self.clf.predict_threat_type(message)
-        emb = self.embedder.embed(message)
+        emb = self.embedder.encode([message])
         added = 0
         if ingest:
             added = self.index.add([message])
         mapping = self.attck.map(message)
-        ids = self.cve.extract_cve(message)
+        ids = self.cve._extract_ids(message)
         enriched = []
         for cid in ids:
-            info = self.cve.enrich_cve(cid)
+            info = self.cve.fetcher.fetch(cid)
             if info:
                 enriched.append(info)
         risk = self.risk.score(message, asset_value)
