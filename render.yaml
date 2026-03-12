@@ -39,3 +39,17 @@ services:
           name: sentientshield-api
           type: web
           property: host
+
+  # SentientShield Workflows (Background Processing)
+  - type: workflow
+    name: sentientshield-workflows
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/render_workflows.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false

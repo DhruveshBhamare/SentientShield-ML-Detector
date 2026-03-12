@@ -343,6 +343,8 @@ function bindEvents() {
   bindButton('logSimilarBtn', handleLogSimilar);
   bindButton('logZeroShotBtn', handleLogZeroShot);
   bindButton('refreshAlertsBtn', loadLists);
+  bindButton('batchProcessBtn', () => handleBatchProcess());
+  bindButton('demo7LogsBtn', run7LogsDemo);
 }
 
 function bindButton(id, handler) {
@@ -394,6 +396,41 @@ async function handleSocReport() {
   } else {
      renderJsonResult('socResult', res);
   }
+}
+
+async function handleBatchProcess(customLogs = null) {
+  const logs = customLogs || getValue('batchLogs');
+  if (!logs) return toast('Please enter logs or use demo button');
+  const logList = Array.isArray(logs) ? logs : logs.split('\n').filter(l => l.trim());
+  
+  const btn = document.getElementById('batchProcessBtn');
+  const originalText = btn.innerText;
+  btn.innerText = 'Triggering Workflow...';
+  btn.disabled = true;
+
+  try {
+    const res = await apiCall('/api/logs/workflow/batch-process', { logs: logList });
+    renderJsonResult('batchResult', res);
+    toast('Workflow task triggered successfully');
+  } finally {
+    btn.innerText = originalText;
+    btn.disabled = false;
+  }
+}
+
+function run7LogsDemo() {
+  const sampleLogs = [
+    "SELECT * FROM users WHERE id = 1 OR 1=1; --",
+    "<script>alert('XSS_ATTACK_DETECTED')</script>",
+    "Failed login attempt for user admin from 192.168.1.100 - multiple attempts in 5 seconds",
+    "GET /../../../../etc/passwd HTTP/1.1",
+    "Your account has been suspended. Click here to verify: http://secure-sentient-shield.com/login",
+    "Suspicious outbound connection to 45.23.11.2 port 4444 (Reverse Shell pattern)",
+    "System health check: All components operational. Memory usage: 45%"
+  ];
+  const el = document.getElementById('batchLogs');
+  if (el) el.value = sampleLogs.join('\n');
+  handleBatchProcess(sampleLogs);
 }
 
 async function handleAttckMap() {

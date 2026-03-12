@@ -233,3 +233,31 @@ class PipelineRunRequest(BaseModel):
 async def pipeline_run(req: PipelineRunRequest, user: Dict = Depends(auth_dependency)):
     res = _pipe.run(req.message, req.asset_value, req.ingest, req.soc_report, req.title)
     return {"result": res, "user": user.get("sub") or user.get("uid")}
+
+class BatchWorkflowRequest(BaseModel):
+    logs: list[str] = Field(default_factory=list)
+    title: str | None = None
+
+@router.post("/workflow/batch-process")
+async def trigger_batch_workflow(req: BatchWorkflowRequest, user: Dict = Depends(auth_dependency)):
+    """
+    Triggers a batch log processing workflow.
+    In local/standard environments, it runs synchronously.
+    In Render environments, this would ideally trigger the Render SDK workflow.
+    """
+    try:
+        from scripts.render_workflows import process_logs_task
+        # In a real Render environment with SDK, you might do:
+        # workflow_id = process_logs_task.run(logs=req.logs)
+        # return {"status": "triggered", "workflow_id": workflow_id}
+        
+        # For now, we simulate/run directly
+        results = process_logs_task(req.logs)
+        return {
+            "status": "completed", 
+            "results": results, 
+            "user": user.get("sub") or user.get("uid")
+        }
+    except Exception as e:
+        logger.error(f"Workflow trigger failed: {e}")
+        return {"status": "error", "detail": str(e), "user": user.get("sub") or user.get("uid")}

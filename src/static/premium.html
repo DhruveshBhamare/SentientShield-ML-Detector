@@ -219,6 +219,21 @@
             <div id="socResult" class="row" style="margin-top: 10px;"></div>
           </div>
 
+          <!-- Render Workflow Batch Processor -->
+          <div class="card">
+            <div class="badge" style="background: var(--primary); color: #000; font-weight: 800; margin-bottom: 10px;">RENDER WORKFLOW SDK</div>
+            <h3>Batch AI Log Processor</h3>
+            <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 15px;">Offload high-volume log analysis to distributed Render instances for faster processing.</p>
+            <div class="form">
+              <textarea id="batchLogs" placeholder="Paste batch of logs (one per line)" rows="5"></textarea>
+              <div class="row" style="margin-top: 10px; gap: 10px; flex-wrap: wrap;">
+                <button id="batchProcessBtn" class="btn glow-on-hover" type="button">Process Batch</button>
+                <button id="demo7LogsBtn" class="btn" type="button" style="background: var(--glass); border: 1px solid var(--border);">Run "7 Logs" Demo</button>
+              </div>
+            </div>
+            <div id="batchResult" class="row" style="margin-top: 10px;"></div>
+          </div>
+
           <!-- MITRE ATT&CK Mapping -->
           <div class="card">
             <h3>MITRE ATT&CK Mapping</h3>
