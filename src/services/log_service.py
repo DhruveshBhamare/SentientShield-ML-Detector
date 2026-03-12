@@ -11,7 +11,11 @@ logger = logging.getLogger(__name__)
 
 from ..models.loader import get_model, get_metadata, get_model_path
 
+_LIGHT_MODE = os.getenv("SENTIENTSHIELD_LIGHT_MODE", "").strip().lower() in ("1", "true", "yes", "on")
+
 try:
+    if _LIGHT_MODE:
+        raise ImportError("SentientShield light mode disables transformers imports")
     from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig, AutoModelForCausalLM
     import torch
     _HAS_TRANSFORMERS = True
@@ -23,6 +27,8 @@ except Exception:
     torch = None
     _HAS_TRANSFORMERS = False
 try:
+    if _LIGHT_MODE:
+        raise ImportError("SentientShield light mode disables transformers pipeline imports")
     from transformers import pipeline
     _HAS_PIPELINE = True
 except Exception:
@@ -34,7 +40,7 @@ def _norm(v):
 
 class DistilBERTLogClassifier:
     def __init__(self):
-        self.available = _HAS_TRANSFORMERS
+        self.available = _HAS_TRANSFORMERS and not _LIGHT_MODE
         if self.available:
             try:
                 self.tokenizer = AutoTokenizer.from_pretrained(get_model_path("distilbert-base-uncased"))
@@ -102,6 +108,8 @@ class DistilBERTLogClassifier:
                 ("ssrf", ""), ("idor", ""), ("csrf", ""), ("ddos", ""), ("brute_force", ""),
                 ("phishing", ""), ("malware", "")
             ]
+            self._sev_proto = None
+            self._thr_proto = None
 
     def _embed(self, text: str):
         with torch.no_grad():
@@ -192,6 +200,8 @@ class MiniLMEmbedder:
         self.available = False
         self.model = None
         self.device = "cpu"
+        if _LIGHT_MODE:
+            return
         try:
             from sentence_transformers import SentenceTransformer
             import torch
@@ -251,6 +261,9 @@ class FaissVectorIndex:
         self.texts: List[str] = []
         self.index = None
         self.dim = None
+        if _LIGHT_MODE:
+            self.faiss = None
+            return
         try:
             import faiss
             self.faiss = faiss
@@ -304,6 +317,8 @@ class ZeroShotThreatClassifier:
     def __init__(self):
         self.available = False
         self.clf = None
+        if _LIGHT_MODE:
+            return
         try:
             if _HAS_PIPELINE:
                 self.clf = pipeline("zero-shot-classification", model=get_model_path("facebook/bart-large-mnli"))
@@ -334,6 +349,8 @@ class PhishingDetector:
         self.available = False
         self.clf = None
         self.device = -1
+        if _LIGHT_MODE:
+            return
         try:
             if _HAS_PIPELINE:
                 import torch
@@ -534,6 +551,8 @@ class SOCReportGenerator:
         self.clf = clf
         self.attck = attck
         self.llm_client = llm_client
+        if _LIGHT_MODE:
+            return
         try:
             if _HAS_TRANSFORMERS and BitsAndBytesConfig is not None:
                 use_gpu = bool(torch.cuda.is_available())
@@ -705,6 +724,10 @@ class CVERAGEngine:
         self.records: List[Dict[str,str]] = []
         self.index = None
         self.dim = None
+        if _LIGHT_MODE:
+            self.faiss = None
+            self._init_index()
+            return
         try:
             import faiss
             self.faiss = faiss

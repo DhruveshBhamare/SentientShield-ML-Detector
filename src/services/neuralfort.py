@@ -42,7 +42,10 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+_LIGHT_MODE = os.getenv("SENTIENTSHIELD_LIGHT_MODE", "").strip().lower() in ("1", "true", "yes", "on")
 try:
+    if _LIGHT_MODE:
+        raise ImportError("SentientShield light mode disables sentence_transformers import")
     from sentence_transformers import SentenceTransformer
     _HAS_ST = True
 except Exception:
@@ -1109,7 +1112,7 @@ class SecurityKnowledgeBase:
             self.entries = loaded_entries
             corpus = [self._entry_text(e) for e in self.entries]
             if corpus:
-                if _HAS_ST:
+                if _HAS_ST and not _LIGHT_MODE:
                     try:
                         self.st_model = SentenceTransformer(get_model_path("sentence-transformers/all-MiniLM-L6-v2"))
                         import numpy as np

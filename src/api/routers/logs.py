@@ -18,11 +18,14 @@ def _get_ctx():
     clf = DistilBERTLogClassifier()
     embedder = MiniLMEmbedder()
     nvidia_bot = NVIDIAQwenChatbot()
-    try:
-        index = FaissVectorIndex(embedder)
-        if index.index is None:
+    if embedder.available:
+        try:
+            index = FaissVectorIndex(embedder)
+            if index.index is None:
+                index = InMemoryVectorIndex(embedder)
+        except Exception:
             index = InMemoryVectorIndex(embedder)
-    except Exception:
+    else:
         index = InMemoryVectorIndex(embedder)
     zs = ZeroShotThreatClassifier()
     phish = PhishingDetector()
