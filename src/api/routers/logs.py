@@ -242,22 +242,37 @@ class BatchWorkflowRequest(BaseModel):
 async def trigger_batch_workflow(req: BatchWorkflowRequest, user: Dict = Depends(auth_dependency)):
     """
     Triggers a batch log processing workflow.
-    In local/standard environments, it runs synchronously.
-    In Render environments, this would ideally trigger the Render SDK workflow.
+    In Render environments, it uses the Render SDK to trigger a distributed task.
+    In local environments, it runs synchronously.
     """
     try:
-        from scripts.render_workflows import process_logs_task
-        # In a real Render environment with SDK, you might do:
-        # workflow_id = process_logs_task.run(logs=req.logs)
-        # return {"status": "triggered", "workflow_id": workflow_id}
-        
-        # For now, we simulate/run directly
-        results = process_logs_task(req.logs)
-        return {
-            "status": "completed", 
-            "results": results, 
-            "user": user.get("sub") or user.get("uid")
-        }
+        if os.getenv("RENDER"):
+            from render_sdk import RenderAsync
+            render = RenderAsync()
+            # Slug format: {service-slug}/{task-name}
+            # service-slug is defined in render.yaml as 'sentientshield-workflows'
+            # task-name is defined in render_workflows.py as 'process_logs'
+            task_slug = "sentientshield-workflows/process_logs"
+            
+            logger.info(f"Triggering Render Workflow task: {task_slug}")
+            started_run = await render.workflows.start_task(task_slug, [req.logs])
+            
+            return {
+                "status": "triggered",
+                "workflow_run_id": started_run.id,
+                "task": task_slug,
+                "user": user.get("sub") or user.get("uid")
+            }
+        else:
+            # Fallback for local development
+            from scripts.render_workflows import process_logs_task
+            logger.info("Running workflow task locally (Synchronous)")
+            results = process_logs_task(req.logs)
+            return {
+                "status": "completed", 
+                "results": results, 
+                "user": user.get("sub") or user.get("uid")
+            }
     except Exception as e:
         logger.error(f"Workflow trigger failed: {e}")
         return {"status": "error", "detail": str(e), "user": user.get("sub") or user.get("uid")}
