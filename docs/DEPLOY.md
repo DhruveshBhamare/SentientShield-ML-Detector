@@ -47,7 +47,25 @@ Railway is a robust alternative to Render that often handles Docker configuratio
 See `render.yaml` in the root directory.
 1.  Go to Render Dashboard -> **New Blueprint**.
 2.  Connect your repo.
-3.  Render will auto-deploy both services.
+3.  Render will auto-deploy the following services:
+    *   **sentientshield-api**: FastAPI backend.
+    *   **sentientshield-analytics**: Streamlit dashboard.
+    *   **sentientshield-workflows**: Distributed background tasks (Render Workflows SDK).
+
+---
+
+## 🔑 Environment Variables
+
+For a permanent and secure deployment, set the following variables in your cloud provider's dashboard:
+
+| Variable | Description | Recommended Value |
+| :--- | :--- | :--- |
+| `NVIDIA_API_KEY` | NVIDIA AI Foundation API Key | Your API Key |
+| `HF_TOKEN` | HuggingFace Write Token | For model persistence |
+| `HF_HUB_MODEL_ID` | HuggingFace Model Repo | e.g. `user/sentientshield-models` |
+| `JWT_SECRET` | Secret for Auth | Long random string |
+| `TRUSTED_ORIGINS` | CORS Origins | `*` or your domains |
+| `NVIDIA_MODEL` | LLM Model ID | `qwen/qwen3.5-397b-a17b` |
 
 ---
 

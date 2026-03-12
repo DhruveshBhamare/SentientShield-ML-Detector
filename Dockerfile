@@ -18,7 +18,7 @@ COPY . .
 ENV PYTHONPATH="/app"
 
 # Initialize production environment
-RUN python -m scripts.setup_production
+RUN export PYTHONPATH=$PYTHONPATH:. && python -m scripts.setup_production
 
 # Environment defaults (override at runtime)
 ENV JWT_SECRET="change-me-in-prod" \

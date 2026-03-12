@@ -14,8 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Grant execution permissions to the start script
-RUN chmod +x docker/start.sh
+# Grant execution permissions and run setup
+RUN chmod +x docker/start.sh && \
+    export PYTHONPATH=$PYTHONPATH:. && \
+    python -m scripts.setup_production
 
 # Create a non-root user (often required by HF Spaces)
 RUN useradd -m -u 1000 user

@@ -44,7 +44,7 @@ services:
   - type: workflow
     name: sentientshield-workflows
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && export PYTHONPATH=$PYTHONPATH:. && python -m scripts.setup_production
     startCommand: python scripts/render_workflows.py
     envVars:
       - key: PYTHON_VERSION
@@ -53,3 +53,5 @@ services:
         sync: false
       - key: HF_TOKEN
         sync: false
+      - key: RENDER
+        value: "true"
