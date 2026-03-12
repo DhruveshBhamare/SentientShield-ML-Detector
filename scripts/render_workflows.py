@@ -5,8 +5,8 @@ import json
 from datetime import datetime
 from typing import List, Dict
 
-# Ensure root is in PYTHONPATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Ensure repo root is first in PYTHONPATH (Render runs this file from /scripts)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from render_sdk import Workflows, Retry
 from src.services.log_service import (
