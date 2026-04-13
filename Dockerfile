@@ -1,36 +1,47 @@
-# SentientShield-WebAttackPredictor FastAPI Microservice
 FROM python:3.10-slim
 
-# Set workdir
 WORKDIR /app
 
-# System deps
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt ./
+# Install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# Copy the rest of the application
 COPY . .
 
-# Set PYTHONPATH to include current directory
-ENV PYTHONPATH="/app"
+# Set environment variables for zero-cost deployment (Hugging Face)
+ENV SENTIENTSHIELD_LIGHT_MODE="true" \
+    NVIDIA_API_KEY="" \
+    THREAT_INGEST_PUBLIC_FALLBACK="true" \
+    THREAT_INGEST_INTERVAL_SECONDS="60" \
+    THREAT_INGEST_ENABLED="true" \
+    HF_HUB_REPO_ID="DhruveshBhamare/SentientShield-ML-Model" \
+    PYTHONPATH="/app" \
+    PYTHONUNBUFFERED=1 \
+    HOME=/home/user
 
-# Initialize production environment
-RUN export PYTHONPATH=$PYTHONPATH:. && python -m scripts.setup_production
+# Create a non-root user (Hugging Face requirement)
+RUN useradd -m -u 1000 user && \
+    chown -R user:user /app /var/lib/nginx /var/log/nginx /run
 
-# Environment defaults (override at runtime)
-ENV JWT_SECRET="change-me-in-prod" \
-    JWT_ALG="HS256" \
-    JWT_ISSUER="" \
-    JWT_AUDIENCE="" \
-    TRUSTED_ORIGINS="http://localhost,http://127.0.0.1" \
-    RETRAIN_INTERVAL_SECONDS="86400" \
-    PYTHONUNBUFFERED=1
+# Grant execution permissions
+RUN chmod +x docker/start.sh
 
-# Expose default port (Render will override)
-EXPOSE 10000
+# Run setup (as root to ensure directories are created, then fix permissions)
+RUN python -m scripts.setup_production && \
+    chown -R user:user /app
 
-# Start Uvicorn server with dynamic port pointing to src/main.py
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+USER user
+ENV PATH=/home/user/.local/bin:$PATH
+
+# Expose the port Hugging Face Spaces expects
+EXPOSE 7860
+
+# Run the wrapper script
+CMD ["./docker/start.sh"]
