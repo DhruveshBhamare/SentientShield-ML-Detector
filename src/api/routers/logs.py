@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from ...configs.security import auth_dependency
 import os
 import logging
+import threading
 from ...services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
