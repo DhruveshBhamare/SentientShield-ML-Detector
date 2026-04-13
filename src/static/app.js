@@ -1,6 +1,6 @@
 // Premium frontend app: data fetch, charts, token handling
 
-const API_BASE = window.location.origin;
+const API_BASE = "";
 
 const API = {
   health: '/api/status',

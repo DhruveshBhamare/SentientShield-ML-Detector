@@ -99,12 +99,8 @@ def healthz():
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/")
-async def root_endpoint(request: Request):
-    # Check if this is likely a health check or a browser request
-    accept = request.headers.get("accept", "")
-    if "text/html" not in accept:
-        return {"status": "ok", "service": "SentientShield-API"}
-    return RedirectResponse(url="/static/premium.html#bot")
+def root():
+    return RedirectResponse(url="/static/premium.html")
 
 @app.get("/premium.html", response_class=HTMLResponse)
 async def premium_page():
