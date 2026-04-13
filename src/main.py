@@ -17,7 +17,7 @@ from .api.routers.predict import router as predict_router
 from .api.routers.status import router as status_router
 from .api.routers.dashboard import router as dashboard_router
 from .api.routers.project import router as project_router
-from .api.routers.logs import router as logs_router
+from .api.routers.logs import router as logs_router, prewarm_logs_context
 from .api.tasks.scheduler import start_daily_retrain_task
 from .api.tasks.threat_ingestor import start_threat_ingest_task
 from .models.loader import load_model_if_needed
@@ -77,8 +77,9 @@ async def startup_event():
         def _safe_load():
             try:
                 load_model_if_needed()
+                prewarm_logs_context()
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Model preload failed: {e}")
+                logging.getLogger(__name__).warning(f"Background preload failed: {e}")
         asyncio.create_task(asyncio.to_thread(_safe_load))
     except Exception as e:
         print(f"Startup warning: {e}")
@@ -91,10 +92,18 @@ async def startup_event():
 
 @app.get("/ping")
 def ping():
-    return HTMLResponse("pong")
+    return HTMLResponse("pong", status_code=200)
+
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/")
-async def root_endpoint():
+async def root_endpoint(request: Request):
+    # Check if this is likely a health check or a browser request
+    accept = request.headers.get("accept", "")
+    if "text/html" not in accept:
+        return {"status": "ok", "service": "SentientShield-API"}
     return RedirectResponse(url="/static/premium.html#bot")
 
 @app.get("/premium.html", response_class=HTMLResponse)

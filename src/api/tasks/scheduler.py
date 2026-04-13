@@ -22,9 +22,16 @@ async def daily_retrain_loop(interval: Optional[int] = None, logger: Optional[Ca
     if logger is None:
         logger = print
 
+    # Initial delay to allow the app to fully start and pass health checks
+    initial_delay = 60 # 60 seconds
+    logger(f"[Scheduler] Waiting {initial_delay}s before first retrain cycle...")
+    await asyncio.sleep(initial_delay)
+
     while True:
         try:
-            result = daily_retrain()
+            logger("[Scheduler] Starting background retrain cycle...")
+            # Run blocking daily_retrain in a separate thread to avoid freezing the event loop
+            result = await asyncio.to_thread(daily_retrain)
             logger(f"[Scheduler] Retrain completed: {json.dumps(result)}")
         except Exception as e:
             logger(f"[Scheduler] Retrain failed: {e}")

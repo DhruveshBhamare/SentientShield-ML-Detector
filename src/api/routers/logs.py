@@ -15,40 +15,55 @@ def _get_ctx():
     if _ctx is not None:
         return _ctx
 
-    clf = DistilBERTLogClassifier()
-    embedder = MiniLMEmbedder()
-    nvidia_bot = NVIDIAQwenChatbot()
-    if embedder.available:
-        try:
-            index = FaissVectorIndex(embedder)
-            if index.index is None:
+    # To avoid repeated initialization on parallel requests if _ctx is None
+    import threading
+    lock = threading.Lock()
+    with lock:
+        if _ctx is not None:
+            return _ctx
+        
+        logger.info("[Logs] Initializing AI Context for the first time...")
+        clf = DistilBERTLogClassifier()
+        embedder = MiniLMEmbedder()
+        nvidia_bot = NVIDIAQwenChatbot()
+        if embedder.available:
+            try:
+                index = FaissVectorIndex(embedder)
+                if index.index is None:
+                    index = InMemoryVectorIndex(embedder)
+            except Exception:
                 index = InMemoryVectorIndex(embedder)
-        except Exception:
+        else:
             index = InMemoryVectorIndex(embedder)
-    else:
-        index = InMemoryVectorIndex(embedder)
-    zs = ZeroShotThreatClassifier()
-    phish = PhishingDetector()
-    attck = MITREAttckMapper(zs, embedder)
-    soc = SOCReportGenerator(clf, attck, llm_client=nvidia_bot)
-    trend = PGTrendStore(os.getenv("DATABASE_URL")) if os.getenv("DATABASE_URL") else TrendStore(attck.db_path)
-    risk = RiskScoringEngine(clf, trend, embedder)
-    pipe = PipelineEngine(clf, embedder, index, attck, risk, soc)
+        zs = ZeroShotThreatClassifier()
+        phish = PhishingDetector()
+        attck = MITREAttckMapper(zs, embedder)
+        soc = SOCReportGenerator(clf, attck, llm_client=nvidia_bot)
+        trend = PGTrendStore(os.getenv("DATABASE_URL")) if os.getenv("DATABASE_URL") else TrendStore(attck.db_path)
+        risk = RiskScoringEngine(clf, trend, embedder)
+        pipe = PipelineEngine(clf, embedder, index, attck, risk, soc)
 
-    _ctx = {
-        "clf": clf,
-        "embedder": embedder,
-        "nvidia_bot": nvidia_bot,
-        "index": index,
-        "zs": zs,
-        "phish": phish,
-        "attck": attck,
-        "soc": soc,
-        "trend": trend,
-        "risk": risk,
-        "pipe": pipe,
-    }
+        _ctx = {
+            "clf": clf,
+            "embedder": embedder,
+            "nvidia_bot": nvidia_bot,
+            "index": index,
+            "zs": zs,
+            "phish": phish,
+            "attck": attck,
+            "soc": soc,
+            "trend": trend,
+            "risk": risk,
+            "pipe": pipe,
+        }
     return _ctx
+
+def prewarm_logs_context():
+    """Trigger lazy initialization in a thread safe way."""
+    try:
+        _get_ctx()
+    except Exception as e:
+        logger.error(f"[Logs] Prewarm failed: {e}")
 
 class LogRequest(BaseModel):
     message: str = Field(..., description="Log message text")
