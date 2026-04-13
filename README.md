@@ -1,3 +1,13 @@
+---
+title: SentientShield
+emoji: 🛡️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # SentientShield AI Cybersecurity Platform
 
 **SentientShield** is an advanced AI-powered web threat detection and autonomous infrastructure resilience system.
