@@ -25,6 +25,11 @@ async def threat_ingest_loop(interval: Optional[int] = None, logger_fn: Optional
     q: Deque[str] = deque()
     next_fetch_at = 0.0
 
+    # Initial delay to allow the app to fully start and pass health checks
+    initial_delay = 45 # 45 seconds
+    logger_fn(f"[ThreatIngest] Waiting {initial_delay}s before starting loop...")
+    await asyncio.sleep(initial_delay)
+
     while True:
         try:
             now = time.monotonic()

@@ -9,16 +9,14 @@ from ...services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InM
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 logger = logging.getLogger(__name__)
 _ctx = None
+_ctx_lock = threading.Lock()
 
 def _get_ctx():
     global _ctx
     if _ctx is not None:
         return _ctx
 
-    # To avoid repeated initialization on parallel requests if _ctx is None
-    import threading
-    lock = threading.Lock()
-    with lock:
+    with _ctx_lock:
         if _ctx is not None:
             return _ctx
         
