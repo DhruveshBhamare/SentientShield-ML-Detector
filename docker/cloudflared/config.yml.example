@@ -1,0 +1,10 @@
+tunnel: TUNNEL_UUID
+credentials-file: /etc/cloudflared/TUNNEL_UUID.json
+
+ingress:
+  - hostname: api.YOUR_DOMAIN
+    service: http://sentientshield-api:10000
+  - hostname: analytics.YOUR_DOMAIN
+    service: http://sentientshield-analytics:8501
+  - service: http_status:404
+

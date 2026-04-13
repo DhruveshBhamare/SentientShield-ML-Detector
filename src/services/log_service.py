@@ -658,170 +658,6 @@ class SOCReportGenerator:
         title_line = f"Title: {title}\n\n" if title else ""
         return {"report": title_line + summary, "model": "fallback-template"}
 
-class CVEFetcher:
-    def __init__(self):
-        self.session = None
-        try:
-            import requests
-            self.session = requests.Session()
-        except Exception:
-            self.session = None
-
-    def fetch(self, cve_id: str) -> Dict[str, str]:
-        title = ""
-        desc = ""
-        cvss = None
-        severity = ""
-        method = ""
-        fix = ""
-        if self.session:
-            try:
-                url = f"https://services.nvd.nist.gov/rest/json/cve/2.0?cveId={cve_id}"
-                r = self.session.get(url, timeout=10)
-                if r.status_code == 200:
-                    data = r.json()
-                    items = data.get("vulnerabilities") or data.get("cveItems") or []
-                    if items:
-                        c = items[0]
-                        node = c.get("cve", {})
-                        title = node.get("titles",[{}])[0].get("title","") if node.get("titles") else ""
-                        descs = node.get("descriptions") or []
-                        if descs:
-                            desc = descs[0].get("value","")
-                        metrics = c.get("cve", {}).get("metrics") or c.get("metrics") or {}
-                        for key in ["cvssMetricV31","cvssMetricV30","cvssMetricV2"]:
-                            arr = metrics.get(key) or []
-                            if arr:
-                                cv = arr[0].get("cvssData") or arr[0].get("cvssData",{})
-                                cvss = cv.get("baseScore")
-                                severity = (cv.get("baseSeverity") or cv.get("severity") or "").upper()
-                                break
-            except Exception:
-                pass
-        lower = (title + " " + desc).lower()
-        if not method:
-            if "sql" in lower or "injection" in lower: method = "SQL Injection"
-            elif "xss" in lower or "cross-site scripting" in lower: method = "XSS"
-            elif "buffer overflow" in lower: method = "Buffer Overflow"
-            elif "rce" in lower or "remote code execution" in lower: method = "RCE"
-        if not fix:
-            fix = "Apply vendor patch, update dependencies, and mitigate via configuration hardening."
-        return {
-            "id": cve_id,
-            "title": title,
-            "description": desc,
-            "cvss": cvss if cvss is not None else 0.0,
-            "severity": severity or "UNKNOWN",
-            "method": method or "UNKNOWN",
-            "fix": fix,
-        }
-
-class CVERAGEngine:
-    def __init__(self, embedder: MiniLMEmbedder, llm_client: Optional['NVIDIAQwenChatbot'] = None):
-        self.embedder = embedder
-        self.fetcher = CVEFetcher()
-        self.llm_client = llm_client
-        self.records: List[Dict[str,str]] = []
-        self.index = None
-        self.dim = None
-        if _LIGHT_MODE:
-            self.faiss = None
-            self._init_index()
-            return
-        try:
-            import faiss
-            self.faiss = faiss
-        except Exception:
-            self.faiss = None
-        self._init_index()
-
-    def _init_index(self):
-        if self.embedder.available:
-            vec = self.embedder.encode(["init"])
-            if vec is not None:
-                import torch
-                v = vec[0].detach().cpu().numpy().astype("float32")
-                self.dim = v.shape[-1]
-        if self.faiss is not None and self.dim:
-            self.index = self.faiss.IndexFlatIP(self.dim)
-
-    def _embed_text(self, text: str):
-        v = self.embedder.encode([text])
-        if v is None:
-            return None
-        import torch
-        return v.detach().cpu().numpy().astype("float32")
-
-    def _extract_ids(self, text: str) -> List[str]:
-        ids = re.findall(r"CVE-\d{4}-\d{4,7}", text, flags=re.IGNORECASE)
-        return [i.upper() for i in ids]
-
-    def ingest_from_log(self, message: str) -> List[Dict[str,str]]:
-        ids = self._extract_ids(message)
-        out = []
-        for cid in ids:
-            rec = self.fetcher.fetch(cid)
-            text = f"{rec['id']} {rec['title']} {rec['description']}"
-            vec = self._embed_text(text)
-            if vec is not None and self.index is not None:
-                self.index.add(vec)
-                self.records.append(rec)
-            out.append(rec)
-        return out
-
-    def search(self, query: str, top_k: int = 5):
-        if self.index is None or not self.records:
-            return []
-        vec = self._embed_text(query)
-        if vec is None:
-            return []
-        D, I = self.index.search(vec, top_k)
-        results = []
-        for score, idx in zip(D[0].tolist(), I[0].tolist()):
-            if idx < 0 or idx >= len(self.records):
-                continue
-            rec = self.records[idx].copy()
-            rec["score"] = float(score)
-            results.append(rec)
-        return results
-
-    def explain_cve(self, cve_id: str, rec: Dict[str, Any] | None = None) -> str:
-        """Provide an AI-powered explanation for a given CVE."""
-        if not rec:
-            rec = self.fetcher.fetch(cve_id)
-        
-        prompt = (
-            f"Explain the following CVE for a SOC analyst:\n\n"
-            f"ID: {rec['id']}\n"
-            f"Title: {rec['title']}\n"
-            f"Description: {rec['description']}\n"
-            f"CVSS: {rec['cvss']}\n"
-            f"Severity: {rec['severity']}\n"
-            f"Exploitation Method: {rec['method']}\n"
-            f"Fix Recommendation: {rec['fix']}\n\n"
-            f"Provide a concise summary covering:\n"
-            f"- What the vulnerability is\n"
-            f"- Likely exploitation path\n"
-            f"- Operational impact\n"
-            f"- Remediation steps\n"
-        )
-        
-        if self.llm_client:
-            try:
-                explanation = self.llm_client.generate_response(prompt, stream=False)
-                if explanation and not explanation.startswith("Error:"):
-                    return explanation.strip()
-            except Exception as e:
-                logger.error(f"NVIDIA CVE Explanation failed: {e}")
-        
-        # Static Fallback
-        return (
-            f"{rec['id']} ({rec['severity']}): {rec['title']}\n"
-            f"- Summary: {rec['description'][:400]}...\n"
-            f"- CVSS: {rec['cvss']} | Method: {rec['method']}\n"
-            f"- Fix: {rec['fix']}\n"
-        )
-
 class TrendStore:
     def __init__(self, db_path: str):
         self.db_path = db_path
@@ -1244,9 +1080,8 @@ class AnomalyEngine:
         return max(0.0, min(anomaly, 1.0))
 
 class RiskScoringEngine:
-    def __init__(self, clf: DistilBERTLogClassifier, cve_engine: CVERAGEngine, store, embedder: MiniLMEmbedder):
+    def __init__(self, clf: DistilBERTLogClassifier, store, embedder: MiniLMEmbedder):
         self.clf = clf
-        self.cve_engine = cve_engine
         self.store = store
         self.anomaly = AnomalyEngine(embedder, store)
         self.NORMALIZATION = 1.0
@@ -1267,13 +1102,7 @@ class RiskScoringEngine:
         ids = re.findall(r"CVE-\d{4}-\d{4,7}", message, flags=re.IGNORECASE)
         if not ids:
             return 0.5
-        cid = ids[0].upper()
-        try:
-            rec = self.cve_engine.fetcher.fetch(cid)
-            sc = float(rec.get("cvss", 5.0))
-        except Exception:
-            sc = 5.0
-        return max(0.0, min(sc/10.0, 1.0))
+        return 0.7
 
     def _frequency_norm(self, threat_type: str, hours: int = 24):
         count = self.store.frequency_for_threat(threat_type or "", hours=hours)
@@ -1320,12 +1149,11 @@ class RiskScoringEngine:
         }
 
 class PipelineEngine:
-    def __init__(self, clf: DistilBERTLogClassifier, embedder: MiniLMEmbedder, index: InMemoryVectorIndex, attck: MITREAttckMapper, cve: CVERAGEngine, risk: RiskScoringEngine, soc: SOCReportGenerator):
+    def __init__(self, clf: DistilBERTLogClassifier, embedder: MiniLMEmbedder, index: InMemoryVectorIndex, attck: MITREAttckMapper, risk: RiskScoringEngine, soc: SOCReportGenerator):
         self.clf = clf
         self.embedder = embedder
         self.index = index
         self.attck = attck
-        self.cve = cve
         self.risk = risk
         self.soc = soc
 
@@ -1337,12 +1165,7 @@ class PipelineEngine:
         if ingest:
             added = self.index.add([message])
         mapping = self.attck.map(message)
-        ids = self.cve._extract_ids(message)
         enriched = []
-        for cid in ids:
-            info = self.cve.fetcher.fetch(cid)
-            if info:
-                enriched.append(info)
         risk = self.risk.score(message, asset_value)
         report = None
         if soc_report:

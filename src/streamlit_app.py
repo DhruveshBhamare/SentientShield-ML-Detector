@@ -9,9 +9,27 @@ API = os.getenv("API_URL", "http://127.0.0.1:8000")
 TOKEN = os.getenv("DEV_TOKEN", "")
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", API).rstrip("/")
 
-def auth_headers():
+def get_dev_token():
+    if "dev_token" in st.session_state and st.session_state.dev_token:
+        return st.session_state.dev_token
     if TOKEN:
-        return {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+        st.session_state.dev_token = TOKEN
+        return st.session_state.dev_token
+    try:
+        r = requests.get(f"{API}/api/dev-token", timeout=15)
+        r.raise_for_status()
+        data = r.json() or {}
+        tok = data.get("token") or ""
+        st.session_state.dev_token = tok
+        return tok
+    except Exception:
+        st.session_state.dev_token = ""
+        return ""
+
+def auth_headers():
+    tok = get_dev_token()
+    if tok:
+        return {"Authorization": f"Bearer {tok}", "Content-Type": "application/json"}
     return {"Content-Type": "application/json"}
 
 def fetch_json(path, method="GET", body=None):
@@ -389,7 +407,7 @@ with c2:
     st.write("")
     if st.button("🚀 Record Event", use_container_width=True):
         try:
-            resp = fetch_json("/api/logs/record-event", method="POST", body={"message": sample_msg})
+            resp = fetch_json("/api/logs/pipeline/run", method="POST", body={"message": sample_msg, "ingest": True, "report": True})
             st.toast("Event Recorded Successfully!", icon="✅")
             st.code(json.dumps(resp, indent=2), language="json")
         except Exception as e:

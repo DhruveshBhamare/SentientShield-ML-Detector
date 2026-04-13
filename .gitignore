@@ -171,3 +171,7 @@ uvicorn*.log
 .vercel/
 .vercelignore
 node_modules/
+
+# Cloudflare Tunnel (local credentials)
+docker/cloudflared/*.json
+docker/cloudflared/config.yml

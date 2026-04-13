@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from ...configs.security import auth_dependency
 import os
 import logging
-from ...services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, CVERAGEngine, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
+from ...services.log_service import DistilBERTLogClassifier, MiniLMEmbedder, InMemoryVectorIndex, FaissVectorIndex, ZeroShotThreatClassifier, PhishingDetector, MITREAttckMapper, SOCReportGenerator, TrendStore, PGTrendStore, RiskScoringEngine, PipelineEngine, NVIDIAQwenChatbot
 
 router = APIRouter(prefix="/api/logs", tags=["Logs"])
 logger = logging.getLogger(__name__)
@@ -31,10 +31,9 @@ def _get_ctx():
     phish = PhishingDetector()
     attck = MITREAttckMapper(zs, embedder)
     soc = SOCReportGenerator(clf, attck, llm_client=nvidia_bot)
-    cve = CVERAGEngine(embedder, llm_client=nvidia_bot)
     trend = PGTrendStore(os.getenv("DATABASE_URL")) if os.getenv("DATABASE_URL") else TrendStore(attck.db_path)
-    risk = RiskScoringEngine(clf, cve, trend, embedder)
-    pipe = PipelineEngine(clf, embedder, index, attck, cve, risk, soc)
+    risk = RiskScoringEngine(clf, trend, embedder)
+    pipe = PipelineEngine(clf, embedder, index, attck, risk, soc)
 
     _ctx = {
         "clf": clf,
@@ -45,7 +44,6 @@ def _get_ctx():
         "phish": phish,
         "attck": attck,
         "soc": soc,
-        "cve": cve,
         "trend": trend,
         "risk": risk,
         "pipe": pipe,
@@ -151,39 +149,6 @@ async def soc_report(req: SocReportRequest, user: Dict = Depends(auth_dependency
     res = ctx["soc"].generate(req.logs, req.title)
     return {"report": res["report"], "model": res.get("model", "fallback"), "user": user.get("sub") or user.get("uid")}
 
-class CveEnrichRequest(BaseModel):
-    message: str
-
-@router.post("/cve-enrich")
-async def cve_enrich(req: CveEnrichRequest, user: Dict = Depends(auth_dependency)):
-    ctx = _get_ctx()
-    items = ctx["cve"].ingest_from_log(req.message)
-    return {"items": items, "user": user.get("sub") or user.get("uid")}
-
-class CveSearchRequest(BaseModel):
-    query: str
-    top_k: int = Field(default=5, ge=1, le=50)
-
-@router.post("/cve-search")
-async def cve_search(req: CveSearchRequest, user: Dict = Depends(auth_dependency)):
-    ctx = _get_ctx()
-    results = ctx["cve"].search(req.query, req.top_k)
-    return {"results": results, "user": user.get("sub") or user.get("uid")}
-
-class CveExplainRequest(BaseModel):
-    message: str = Field(..., description="Text containing CVE ID (e.g., CVE-2024-12345)")
-
-@router.post("/cve-explain")
-async def cve_explain(req: CveExplainRequest, user: Dict = Depends(auth_dependency)):
-    ctx = _get_ctx()
-    items = ctx["cve"].ingest_from_log(req.message)
-    rec = items[0] if items else None
-    if not rec:
-        return {"explanation": "", "error": "No CVE found", "user": user.get("sub") or user.get("uid")}
-    
-    explanation = ctx["cve"].explain_cve(rec["id"], rec)
-    return {"explanation": explanation, "cve": rec, "user": user.get("sub") or user.get("uid"), "model": ctx["nvidia_bot"].model if ctx.get("nvidia_bot") else "fallback"}
-
 class RecordEventRequest(BaseModel):
     message: str
 
@@ -205,6 +170,12 @@ async def top_attack_types(limit: int = 10, user: Dict = Depends(auth_dependency
 
 @router.get("/trends/attack-frequency")
 async def attack_frequency(bucket: str = "hour", limit: int = 24, user: Dict = Depends(auth_dependency)):
+    ctx = _get_ctx()
+    items = ctx["trend"].attack_frequency(bucket=bucket, limit=limit)
+    return {"items": items, "user": user.get("sub") or user.get("uid")}
+
+@router.get("/trends/frequency")
+async def frequency(bucket: str = "hour", limit: int = 24, user: Dict = Depends(auth_dependency)):
     ctx = _get_ctx()
     items = ctx["trend"].attack_frequency(bucket=bucket, limit=limit)
     return {"items": items, "user": user.get("sub") or user.get("uid")}
@@ -241,6 +212,13 @@ async def risk_score(req: RiskScoreRequest, user: Dict = Depends(auth_dependency
 async def recent_events(limit: int = 50, user: Dict = Depends(auth_dependency)):
     ctx = _get_ctx()
     items = ctx["trend"].recent_events(limit=limit)
+    return {"items": items, "user": user.get("sub") or user.get("uid")}
+
+@router.get("/recent")
+async def recent(limit: int = 20, user: Dict = Depends(auth_dependency)):
+    ctx = _get_ctx()
+    items = ctx["trend"].recent_events(limit=max(1, min(limit, 200)))
+    items = sorted(items, key=lambda x: x.get("ts") or "", reverse=True)[: max(1, min(limit, 200))]
     return {"items": items, "user": user.get("sub") or user.get("uid")}
 
 @router.get("/metrics/alerts-today")
@@ -280,7 +258,7 @@ class PipelineRunRequest(BaseModel):
     message: str
     asset_value: float | None = None
     ingest: bool = True
-    soc_report: bool = False
+    soc_report: bool = Field(default=False, validation_alias="report")
     title: str | None = None
 
 @router.post("/pipeline/run")

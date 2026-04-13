@@ -19,6 +19,7 @@ from .api.routers.dashboard import router as dashboard_router
 from .api.routers.project import router as project_router
 from .api.routers.logs import router as logs_router
 from .api.tasks.scheduler import start_daily_retrain_task
+from .api.tasks.threat_ingestor import start_threat_ingest_task
 from .models.loader import load_model_if_needed
 from .configs.config import (
     API_LOG_PATH,
@@ -73,12 +74,20 @@ async def startup_event():
     logging.basicConfig(level=logging.INFO)
     
     try:
-        asyncio.create_task(asyncio.to_thread(load_model_if_needed))
+        def _safe_load():
+            try:
+                load_model_if_needed()
+            except Exception as e:
+                logging.getLogger(__name__).warning(f"Model preload failed: {e}")
+        asyncio.create_task(asyncio.to_thread(_safe_load))
     except Exception as e:
         print(f"Startup warning: {e}")
     
     # Start background scheduler
     start_daily_retrain_task()
+
+    if not os.getenv("PYTEST_CURRENT_TEST"):
+        start_threat_ingest_task()
 
 @app.get("/ping")
 def ping():

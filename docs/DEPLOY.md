@@ -2,6 +2,16 @@
 
 ## ☁️ Cloud Deployment Options
 
+### Option 0: Cloudflare Tunnel (Permanent links from your machine)
+
+If you want a **public HTTPS URL** without deploying to a cloud host (i.e., your own PC/VPS runs the app), use a **named Cloudflare Tunnel**.
+
+- Guide: [CLOUDFLARE_TUNNEL.md](file:///c:/Users/Dhruv/Documents/Projectss/SentientShield-ML-Detector/docs/CLOUDFLARE_TUNNEL.md)
+- Note: it’s only “permanent” if the machine stays on.
+
+If you want a repeatable “do this every time” checklist, use:
+- [REDEPLOY_GUIDE.md](file:///c:/Users/Dhruv/Documents/Projectss/SentientShield-ML-Detector/docs/REDEPLOY_GUIDE.md)
+
 ### Option 1: Hugging Face Spaces (Recommended for ML)
 This is the easiest way to deploy machine learning demos for free.
 

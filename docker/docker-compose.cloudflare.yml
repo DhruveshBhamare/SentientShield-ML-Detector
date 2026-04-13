@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /etc/cloudflared/config.yml run
+    restart: always
+    depends_on:
+      - sentientshield-api
+      - sentientshield-analytics
+    volumes:
+      - ./cloudflared:/etc/cloudflared
+

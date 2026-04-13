@@ -24,7 +24,6 @@ def get_pipeline():
         InMemoryVectorIndex,
         MITREAttckMapper,
         ZeroShotThreatClassifier,
-        CVERAGEngine,
         RiskScoringEngine,
         SOCReportGenerator,
         PipelineEngine,
@@ -39,10 +38,9 @@ def get_pipeline():
     attck = MITREAttckMapper(zs, embedder)
     nvidia_bot = NVIDIAQwenChatbot()
     soc = SOCReportGenerator(clf, attck, llm_client=nvidia_bot)
-    cve = CVERAGEngine(embedder, llm_client=nvidia_bot)
     trend = TrendStore(os.path.join("logs", "intelligence.db"))
-    risk = RiskScoringEngine(clf, cve, trend, embedder)
-    return PipelineEngine(clf, embedder, index, attck, cve, risk, soc)
+    risk = RiskScoringEngine(clf, trend, embedder)
+    return PipelineEngine(clf, embedder, index, attck, risk, soc)
 
 @app.task(name="process_logs")
 def process_logs_task(logs: List[str]):

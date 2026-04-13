@@ -77,8 +77,7 @@ class IntelligencePipeline:
                 threat_type TEXT,
                 mitre_technique TEXT,
                 risk_score REAL,
-                soc_report TEXT,
-                cve_enrichment TEXT
+                soc_report TEXT
             )
         ''')
         conn.commit()
@@ -117,16 +116,13 @@ class IntelligencePipeline:
         self.index.add(np.array([embedding]).astype('float32'))
         self.known_threats_data.append({"threat": threat_type, "ts": datetime.utcnow().isoformat()})
 
-        # Step 6: CVE Enrichment (Mock integration)
-        cve_data = self._get_mock_cve(threat_type)
-
-        # Step 7: Risk Score Calculation
+        # Step 6: Risk Score Calculation
         risk_score = self._calculate_risk_score(severity_res['score'], threat_conf, similarity_score)
 
-        # Step 8: Auto SOC Report (Simulated Llama 3 Output)
-        soc_report = self._generate_soc_report(log_content, threat_type, severity_label, risk_score, mitre_tech, cve_data)
+        # Step 7: Auto SOC Report (Simulated Llama 3 Output)
+        soc_report = self._generate_soc_report(log_content, threat_type, severity_label, risk_score, mitre_tech)
 
-        # Step 9: Store in SQLite
+        # Step 8: Store in SQLite
         report_data = {
             "timestamp": datetime.utcnow().isoformat(),
             "log_content": log_content,
@@ -134,26 +130,17 @@ class IntelligencePipeline:
             "threat_type": threat_type,
             "mitre_technique": mitre_tech,
             "risk_score": risk_score,
-            "soc_report": soc_report,
-            "cve_enrichment": json.dumps(cve_data)
+            "soc_report": soc_report
         }
         self._store_report(report_data)
 
         return report_data
 
-    def _get_mock_cve(self, threat_type: str) -> List[str]:
-        cve_mocks = {
-            "SQL Injection": ["CVE-2023-24329", "CVE-2021-44228"],
-            "XSS": ["CVE-2023-3824", "CVE-2022-31813"],
-            "RCE": ["CVE-2021-44228", "CVE-2023-22515"]
-        }
-        return cve_mocks.get(threat_type, ["CVE-2024-XXXX"])
-
     def _calculate_risk_score(self, sev: float, conf: float, sim: float) -> float:
         # Weighted formula
         return round((sev * 0.4 + conf * 0.4 + sim * 0.2) * 100, 2)
 
-    def _generate_soc_report(self, log, t_type, sev, risk, mitre, cve) -> str:
+    def _generate_soc_report(self, log, t_type, sev, risk, mitre) -> str:
         return f"""
 ### AUTOMATED SOC INCIDENT REPORT
 **ID:** {random_id()} | **Severity:** {sev} | **Risk Score:** {risk}/100
@@ -164,22 +151,21 @@ Detected a potential **{t_type}** attempt targeting the system endpoint. The pat
 **Technical Details:**
 - Payload Fingerprint: {hash(log)}
 - MITRE ATT&CK: {mitre}
-- Potential Vulnerabilities: {", ".join(cve)}
 
 **Automated Recommendation:**
 1. Block the source IP immediately.
 2. Review logs for successful exploitation.
-3. Patch relevant services associated with {cve[0]}.
+3. Patch and harden any exposed services associated with this technique.
 """
 
     def _store_report(self, data: Dict):
         conn = sqlite3.connect(INTEL_DB_PATH)
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO soc_reports (timestamp, log_content, severity, threat_type, mitre_technique, risk_score, soc_report, cve_enrichment)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO soc_reports (timestamp, log_content, severity, threat_type, mitre_technique, risk_score, soc_report)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (data['timestamp'], data['log_content'], data['severity'], data['threat_type'], 
-              data['mitre_technique'], data['risk_score'], data['soc_report'], data['cve_enrichment']))
+              data['mitre_technique'], data['risk_score'], data['soc_report']))
         conn.commit()
         conn.close()
 
