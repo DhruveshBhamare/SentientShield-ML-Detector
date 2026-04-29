@@ -354,11 +354,32 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
   const hasScales = type !== 'doughnut' && type !== 'pie';
   const chart = ensureChart(key, canvasId, () => ({
     type,
-    data: { labels: [], datasets: [{ label: datasetLabel, data: [], backgroundColor: '#4f7cff', borderColor: '#4f7cff' }] },
+    data: { labels: [], datasets: [{ label: datasetLabel, data: [], backgroundColor: '#2563EB', borderColor: '#2563EB' }] },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
-      ...(hasScales ? { scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } } : {}),
+      plugins: { 
+        legend: { display: type === 'pie' || type === 'doughnut' },
+        tooltip: {
+          backgroundColor: '#111827',
+          titleColor: '#FFFFFF',
+          bodyColor: '#FFFFFF',
+          cornerRadius: 8,
+          padding: 12
+        }
+      },
+      ...(hasScales ? { 
+        scales: { 
+          x: { 
+            grid: { display: false },
+            ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+          }, 
+          y: { 
+            beginAtZero: true,
+            grid: { color: '#E5E7EB' },
+            ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+          } 
+        } 
+      } : {}),
     },
   }));
   if (!chart) return;
@@ -385,8 +406,22 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
 function updateLineChart(key, canvasId, labels, datasetLabel, values) {
   const chart = ensureChart(key, canvasId, () => ({
     type: 'line',
-    data: { labels: [], datasets: [{ label: datasetLabel, data: [], borderColor: '#4f7cff', backgroundColor: 'rgba(79,124,255,0.15)', tension: 0.25, fill: true }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
+    data: { labels: [], datasets: [{ label: datasetLabel, data: [], borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', tension: 0.25, fill: true }] },
+    options: { 
+      responsive: true, 
+      plugins: { legend: { display: false } }, 
+      scales: { 
+        x: { 
+          grid: { display: false },
+          ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+        }, 
+        y: { 
+          beginAtZero: true,
+          grid: { color: '#E5E7EB' },
+          ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+        } 
+      } 
+    },
   }));
   if (!chart) return;
   const curLabels = chart.data.labels || [];

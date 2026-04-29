@@ -14,13 +14,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 </head>
-<body data-page="overview" class="page-fade-in intro-active">
-  <!-- Cinematic Intro Overlay -->
-  <div id="intro-overlay" class="intro-overlay">
+<body data-page="overview" class="page-fade-in">
+  <!-- Cinematic Intro Overlay (Dark) -->
+  <div id="intro-overlay" class="intro-overlay dark-landing">
     <div class="intro-bg">
-      <div class="cyber-grid"></div>
       <div id="intro-particles"></div>
-      <div class="scanlines"></div>
     </div>
     
     <div class="intro-content">
@@ -57,17 +55,16 @@
     </header>
 
     <div class="content">
-      <section id="hero" class="hero">
+      <section id="hero" class="hero dark-landing">
         <div class="hero-bg"></div>
-        <div class="cyber-grid"></div>
         <div id="particles-container"></div>
         <div class="inner">
           <div class="hologram-shield"></div>
-          <h1 class="text-reveal">AI-Powered Cyber Intelligence for Modern Defense</h1>
-          <p class="text-reveal" style="animation-delay: 0.2s;">SentientShield transforms raw security logs into actionable intelligence using AI.</p>
-          <div class="actions text-reveal" style="animation-delay: 0.4s;">
-            <a href="/static/neuralfort_dashboard.html" class="btn glow-on-hover">Launch Dashboard</a>
-            <a href="#threats" class="btn glow-on-hover" style="background: transparent; border: 1px solid var(--primary);">View Threats</a>
+          <h1>AI-Powered Cyber Intelligence for Modern Defense</h1>
+          <p style="animation-delay: 0.2s;">SentientShield transforms raw security logs into actionable intelligence using AI.</p>
+          <div class="actions" style="margin-top: 2rem;">
+            <a href="/static/neuralfort_dashboard.html" class="btn btn-primary">Launch Dashboard</a>
+            <a href="#threats" class="btn btn-secondary">View Threats</a>
           </div>
         </div>
       </section>
