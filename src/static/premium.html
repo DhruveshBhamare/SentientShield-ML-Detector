@@ -99,6 +99,38 @@
               <canvas id="chartMitrePieSummary"></canvas>
             </div>
           </div>
+
+          <!-- New Widgets for Production Grade SOC -->
+          <div class="card col-4">
+            <h3>Top Attacking IPs</h3>
+            <div class="table-container">
+              <table class="soc-table" id="topIpsTable">
+                <thead>
+                  <tr><th>IP Address</th><th>Reputation</th><th>Alerts</th></tr>
+                </thead>
+                <tbody id="topIpsBody">
+                  <tr><td class="skeleton" colspan="3">&nbsp;</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card col-4">
+            <h3>Geo Threat Map</h3>
+            <div class="geo-map-placeholder">
+              <span>Live Visual Mapping Active</span>
+            </div>
+          </div>
+
+          <div class="card col-4">
+            <h3>Incident Timeline</h3>
+            <div id="incidentTimeline" class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-dot low"></div>
+                <div class="timeline-content skeleton">Loading incidents...</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

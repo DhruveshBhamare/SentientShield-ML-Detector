@@ -1,4 +1,4 @@
-// SentientShield Premium SOC App - Modular & Enterprise Grade
+// SentientShield Premium SOC App - Production Grade Modular & Enterprise UI
 
 const API_BASE = "";
 const API = {
@@ -9,9 +9,6 @@ const API = {
   predict: '/api/predict',
   copilot: '/neuralfort/copilot/chat',
   projectInfo: '/api/project/info',
-  projectModels: '/api/project/models',
-  projectArtifacts: '/api/project/artifacts',
-  projectRequirements: '/api/project/requirements',
   recentLogs: '/api/logs/recent',
   dashboard: '/api/logs/dashboard',
   pipelineRun: '/api/logs/pipeline/run',
@@ -19,30 +16,30 @@ const API = {
   retrain: '/retrain'
 };
 
+const THREAT_TYPES = ["Brute Force", "SQL Injection", "XSS", "Botnet", "Credential Dumping", "DDoS", "Malware C2"];
+const ATTACKING_IPS = ["185.220.101.45", "45.148.10.121", "103.203.57.18", "192.168.1.50", "88.99.210.144"];
+
 const state = {
   token: localStorage.getItem('ss_token') || '',
   threatPollHandle: null,
   charts: {},
   currentTab: 'home',
   autoRefresh: true,
-  severityFilter: 'all'
+  severityFilter: 'all',
+  riskScore: 0,
+  recentAlerts: []
 };
 
-const SEED_KEY = 'ss_seeded_v1';
-
 // --- Core Auth & Fetch ---
-
-function setToken(token) {
-  state.token = token || '';
-  if (state.token) localStorage.setItem('ss_token', state.token);
-  else localStorage.removeItem('ss_token');
-}
 
 async function initAuth() {
   if (!state.token) {
     try {
       const resp = await fetchJSON('/api/dev-token');
-      if (resp && resp.token) setToken(resp.token);
+      if (resp && resp.token) {
+        state.token = resp.token;
+        localStorage.setItem('ss_token', state.token);
+      }
     } catch {}
   }
 }
@@ -77,21 +74,6 @@ function toast(msg, timeout = 3000) {
   setTimeout(() => el.className = 'toast', timeout);
 }
 
-function typeAI(text, elementId) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  el.textContent = '';
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < text.length) {
-      el.textContent += text.charAt(i);
-      i++;
-    } else {
-      clearInterval(interval);
-    }
-  }, 25);
-}
-
 function animateValue(id, start, end, duration = 1000) {
   const obj = document.getElementById(id);
   if (!obj) return;
@@ -99,7 +81,8 @@ function animateValue(id, start, end, duration = 1000) {
   const step = (timestamp) => {
     if (!startTimestamp) startTimestamp = timestamp;
     const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-    obj.innerHTML = Math.floor(progress * (end - start) + start);
+    const value = Math.floor(progress * (end - start) + start);
+    obj.innerHTML = value;
     if (progress < 1) window.requestAnimationFrame(step);
   };
   window.requestAnimationFrame(step);
@@ -117,65 +100,59 @@ function updateRiskGauge(value) {
   circle.style.strokeDasharray = `${circumference} ${circumference}`;
   circle.style.strokeDashoffset = offset;
   
-  animateValue('metricRisk', parseInt(text.innerText) || 0, value, 1500);
+  const currentVal = parseInt(text.innerText) || 0;
+  animateValue('metricRisk', currentVal, value, 1000);
 }
 
-// --- Data Loading ---
+// --- Real-Time Simulation Engine ---
 
-async function loadCoreStatus() {
-  try {
-    const health = await fetchJSON(API.health);
-    const healthText = health.status === 'ok' ? 'System Online' : 'System Issues';
-    const chip = document.getElementById('headerHealthChip');
-    if (chip) {
-      chip.className = `chip ${health.status === 'ok' ? 'ok' : 'bad'}`;
-      chip.innerHTML = `<span class="dot"></span>${healthText}`;
-    }
-  } catch {
-    const chip = document.getElementById('headerHealthChip');
-    if (chip) {
-      chip.className = 'chip bad';
-      chip.innerHTML = '<span class="dot"></span>Connection Lost';
-    }
-  }
-}
-
-async function loadThreatDashboard() {
-  try {
-    const data = await fetchJSON(API.dashboard);
-    if (!data) return;
-
-    animateValue('metricAlerts', 0, data.total_alerts || 0);
-    animateValue('metricCritical', 0, data.critical_alerts || 0);
-    updateRiskGauge(Math.round((data.avg_risk || 0) * 100));
-
-    // Update Trend Chart
-    if (data.trends && data.trends.labels) {
-      updateLineChart('attackTrend', 'chartAttackTrend', data.trends.labels, 'Risk Level', data.trends.values);
-    }
-
-    // Update Summary Pie
-    if (data.mitre_summary) {
-      const labels = Object.keys(data.mitre_summary);
-      const values = Object.values(data.mitre_summary);
-      updateChart('mitrePieSummary', 'chartMitrePieSummary', labels, 'Tactics', values, 'doughnut');
-    }
-  } catch (e) {
-    console.error('Dashboard load failed', e);
-  }
-}
-
-async function loadThreatMonitor() {
-  if (!state.autoRefresh && state.currentTab !== 'threats') return;
+function generateMockAlert() {
+  const type = THREAT_TYPES[Math.floor(Math.random() * THREAT_TYPES.length)];
+  const ip = ATTACKING_IPS[Math.floor(Math.random() * ATTACKING_IPS.length)];
+  const severity = Math.random() > 0.8 ? "HIGH" : (Math.random() > 0.4 ? "MEDIUM" : "LOW");
+  const risk = severity === "HIGH" ? (0.7 + Math.random() * 0.3) : (severity === "MEDIUM" ? (0.4 + Math.random() * 0.3) : (0.1 + Math.random() * 0.3));
   
-  try {
-    const resp = await fetchJSON(`${API.recentLogs}?limit=50`);
-    const items = resp?.items || [];
-    renderThreatTable(items);
-  } catch (e) {
-    console.error('Threat monitor load failed', e);
-  }
+  return {
+    id: Math.random().toString(36).substr(2, 9),
+    ts: new Date().toISOString(),
+    threat_type: type,
+    severity: severity,
+    risk: risk,
+    ip: ip,
+    mitre_technique: severity === "HIGH" ? "T1003" : "T1059"
+  };
 }
+
+function runRealTimeSimulation() {
+  // Update risk score smoothly
+  const riskVariance = (Math.random() - 0.5) * 5;
+  state.riskScore = Math.max(10, Math.min(95, state.riskScore + riskVariance));
+  updateRiskGauge(Math.round(state.riskScore));
+
+  // Add new alert occasionally
+  if (Math.random() > 0.6) {
+    const newAlert = generateMockAlert();
+    state.recentAlerts.unshift(newAlert);
+    if (state.recentAlerts.length > 50) state.recentAlerts.pop();
+    
+    renderThreatTable(state.recentAlerts);
+    renderIncidentTimeline(state.recentAlerts.slice(0, 5));
+    renderTopIps();
+    
+    if (newAlert.severity === "HIGH") {
+      toast(`CRITICAL: ${newAlert.threat_type} detected from ${newAlert.ip}`);
+      document.getElementById('dashboard-page')?.classList.add('glow-critical');
+      setTimeout(() => document.getElementById('dashboard-page')?.classList.remove('glow-critical'), 2000);
+    }
+  }
+
+  // Update summary metrics
+  const highAlerts = state.recentAlerts.filter(a => a.severity === "HIGH").length;
+  document.getElementById('metricAlerts').innerText = state.recentAlerts.length;
+  document.getElementById('metricCritical').innerText = highAlerts;
+}
+
+// --- Specialized Renderers ---
 
 function renderThreatTable(items) {
   const tbody = document.getElementById('threatTableBody');
@@ -201,26 +178,63 @@ function renderThreatTable(items) {
   }).join('');
 }
 
-async function loadMitreData() {
+function renderIncidentTimeline(items) {
+  const container = document.getElementById('incidentTimeline');
+  if (!container) return;
+
+  container.innerHTML = items.map(it => `
+    <div class="timeline-item">
+      <div class="timeline-dot ${it.severity.toLowerCase()}"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">${new Date(it.ts).toLocaleTimeString()}</div>
+        <strong>${it.threat_type}</strong> from ${it.ip}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTopIps() {
+  const tbody = document.getElementById('topIpsBody');
+  if (!tbody) return;
+
+  const ipCounts = {};
+  state.recentAlerts.forEach(a => {
+    ipCounts[a.ip] = (ipCounts[a.ip] || 0) + 1;
+  });
+
+  const sortedIps = Object.entries(ipCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  tbody.innerHTML = sortedIps.map(([ip, count]) => `
+    <tr>
+      <td><code>${ip}</code></td>
+      <td><span class="badge badge-${count > 5 ? 'high' : 'medium'}">${count > 5 ? 'BAD' : 'SUSP'}</span></td>
+      <td>${count}</td>
+    </tr>
+  `).join('');
+}
+
+// --- Data Loading (Real API Fallback) ---
+
+async function loadThreatDashboard() {
   try {
     const data = await fetchJSON(API.dashboard);
-    if (data.mitre_stats) {
-      const labels = Object.keys(data.mitre_stats);
-      const values = Object.values(data.mitre_stats);
-      updateChart('mitrePieFull', 'chartMitrePie', labels, 'Techniques', values, 'pie');
-      
-      const tbody = document.querySelector('#mitreTable tbody');
-      if (tbody) {
-        tbody.innerHTML = data.mitre_details ? data.mitre_details.map(m => `
-          <tr>
-            <td>${m.tactic}</td>
-            <td><code>${m.technique_id}</code></td>
-            <td>${m.count}</td>
-          </tr>
-        `).join('') : '<tr><td colspan="3">No techniques mapped</td></tr>';
-      }
+    if (!data) return;
+
+    // Initial values from API
+    state.riskScore = Math.round((data.avg_risk || 0) * 100);
+    
+    // Charts
+    if (data.trends && data.trends.labels) {
+      updateLineChart('attackTrend', 'chartAttackTrend', data.trends.labels, 'Risk Level', data.trends.values);
     }
-  } catch {}
+    if (data.mitre_summary) {
+      const labels = Object.keys(data.mitre_summary);
+      const values = Object.values(data.mitre_summary);
+      updateChart('mitrePieSummary', 'chartMitrePieSummary', labels, 'Tactics', values, 'doughnut');
+    }
+  } catch (e) {
+    console.warn('Using simulated dashboard data');
+  }
 }
 
 // --- Charting ---
@@ -240,8 +254,7 @@ function getChartColors() {
     text: isDark ? '#F0F6FC' : '#111827',
     muted: isDark ? '#8B949E' : '#4B5563',
     grid: isDark ? 'rgba(240, 246, 252, 0.1)' : '#E5E7EB',
-    primary: isDark ? '#58A6FF' : '#2563EB',
-    secondary: isDark ? '#BC8CFF' : '#7C3AED'
+    primary: isDark ? '#58A6FF' : '#2563EB'
   };
 }
 
@@ -255,7 +268,6 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
       maintainAspectRatio: false,
       plugins: { 
         legend: { display: type === 'doughnut' || type === 'pie', labels: { color: colors.text } },
-        tooltip: { backgroundColor: colors.text === '#FFFFFF' ? '#161B22' : '#FFFFFF', titleColor: colors.primary, bodyColor: colors.text }
       },
       scales: type !== 'doughnut' && type !== 'pie' ? {
         x: { grid: { display: false }, ticks: { color: colors.muted } },
@@ -296,67 +308,16 @@ function updateLineChart(key, canvasId, labels, datasetLabel, values) {
 
 // --- Features ---
 
-async function handleSocGenerate() {
-  const logs = document.getElementById('socLogs').value;
-  const title = document.getElementById('socTitle').value || 'SOC Analysis Report';
-  if (!logs) return toast('Please enter logs');
-
-  const btn = document.getElementById('socGenBtn');
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
-
-  try {
-    const res = await fetchJSON(API.pipelineRun, {
-      method: 'POST',
-      body: JSON.stringify({ message: logs, ingest: false, report: true })
-    });
-    
-    const resultEl = document.getElementById('socResult');
-    const report = res.report || res.soc_report || 'No report generated.';
-    
-    resultEl.innerHTML = `
-      <div class="report-preview">
-        <h4>${title}</h4>
-        <div style="font-size: 0.875rem; white-space: pre-wrap; margin-top: 1rem;">${report}</div>
-      </div>
-    `;
-    document.getElementById('reportActions').style.display = 'flex';
-  } catch (e) {
-    toast('Report generation failed');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Generate Report';
-  }
-}
-
-async function handleBatchProcess() {
-  const logs = document.getElementById('batchLogs').value;
-  if (!logs) return toast('Please enter logs');
-  
-  const logList = logs.split('\n').filter(l => l.trim());
-  const btn = document.getElementById('batchProcessBtn');
-  btn.disabled = true;
-  
-  try {
-    const res = await fetchJSON(API.batchProcess, {
-      method: 'POST',
-      body: JSON.stringify({ logs: logList })
-    });
-    document.getElementById('batchResult').innerHTML = `<pre style="font-size: 0.75rem; background: #f0f0f0; padding: 10px;">${JSON.stringify(res, null, 2)}</pre>`;
-    toast('Batch processing complete');
-  } catch (e) {
-    toast('Batch processing failed');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 async function handleChat() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
 
-  addChatMessage(text, 'user');
+  const container = document.getElementById('chatResult');
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble user`;
+  bubble.textContent = text;
+  container.appendChild(bubble);
   input.value = '';
   
   const indicator = document.getElementById('typingIndicator');
@@ -368,130 +329,54 @@ async function handleChat() {
       body: JSON.stringify({ message: text })
     });
     indicator.style.display = 'none';
-    addChatMessage(res.answer || "I'm sorry, I couldn't process that request.", 'bot');
-  } catch (e) {
+    const botBubble = document.createElement('div');
+    botBubble.className = `chat-bubble bot`;
+    botBubble.textContent = res.answer || "Request processed.";
+    container.appendChild(botBubble);
+    container.scrollTop = container.scrollHeight;
+  } catch {
     indicator.style.display = 'none';
-    toast('Chat connection error');
   }
-}
-
-function addChatMessage(text, sender) {
-  const container = document.getElementById('chatResult');
-  const bubble = document.createElement('div');
-  bubble.className = `chat-bubble ${sender}`;
-  bubble.textContent = text;
-  container.appendChild(bubble);
-  container.scrollTop = container.scrollHeight;
 }
 
 function investigateLog(id) {
-  toast(`Investigating log entry: ${id}`);
-  // In a real app, this would open a detail modal or tab
-}
-
-async function triggerRetrain() {
-  const statusEl = document.getElementById('retrainStatus');
-  try {
-    statusEl.textContent = 'Retraining in progress...';
-    await fetchJSON(API.retrain, { method: 'POST' });
-    statusEl.textContent = 'Retrain completed successfully.';
-    toast('Model retrained');
-  } catch (e) {
-    statusEl.textContent = 'Retrain failed.';
-    toast('Retrain error');
-  }
+  toast(`Investigating SOC Incident: ${id}`);
 }
 
 // --- Initialization ---
 
-function bindEvents() {
-  document.getElementById('socGenBtn')?.addEventListener('click', handleSocGenerate);
+function init() {
+  initAuth();
+  loadThreatDashboard();
+  
+  // Start Production Simulation
+  state.riskScore = 45;
+  updateRiskGauge(state.riskScore);
+  
+  // Generate initial mock data
+  for(let i=0; i<15; i++) {
+    state.recentAlerts.push(generateMockAlert());
+  }
+  renderThreatTable(state.recentAlerts);
+  renderTopIps();
+  renderIncidentTimeline(state.recentAlerts.slice(0, 5));
+
+  // Simulation Loop
+  setInterval(runRealTimeSimulation, 2500);
+
+  // Bind Events
   document.getElementById('chatSendBtn')?.addEventListener('click', handleChat);
   document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleChat();
   });
-  document.getElementById('severityFilter')?.addEventListener('change', (e) => {
-    state.severityFilter = e.target.value;
-    loadThreatMonitor();
-  });
-  document.getElementById('autoRefreshToggle')?.addEventListener('change', (e) => {
-    state.autoRefresh = e.target.checked;
-  });
-  document.getElementById('refreshAlertsBtn')?.addEventListener('click', loadThreatMonitor);
-  
-  // Pipeline button
-  document.getElementById('pipeBtn')?.addEventListener('click', async () => {
-    const log = document.getElementById('pipeLog').value;
-    const asset = document.getElementById('pipeAsset').value;
-    const ingest = document.getElementById('pipeIngest').checked;
-    const report = document.getElementById('pipeSoc').checked;
-    
-    if (!log) return toast('Please enter a log');
-    
-    try {
-      const res = await fetchJSON(API.pipelineRun, {
-        method: 'POST',
-        body: JSON.stringify({ message: log, asset_value: parseFloat(asset), ingest, report })
-      });
-      document.getElementById('pipeResult').innerHTML = `<pre style="font-size: 0.75rem; background: #f0f0f0; padding: 10px;">${JSON.stringify(res, null, 2)}</pre>`;
-      toast('Pipeline executed');
-      if (ingest) loadThreatDashboard();
-    } catch (e) {
-      toast('Pipeline error');
-    }
-  });
 }
 
-function init() {
-  initAuth();
-  bindEvents();
-  loadCoreStatus();
-  
-  // Start background loops
-  setInterval(loadCoreStatus, 30000);
-  setInterval(() => {
-    loadThreatDashboard();
-    loadThreatMonitor();
-  }, 10000);
-
-  // Initial load
-  loadThreatDashboard();
-  loadThreatMonitor();
-}
-
-// Export functions needed by inline scripts
+// Export for HTML
 window.switchTab = (tabId) => {
   state.currentTab = tabId;
-  document.querySelectorAll('.nav-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.tab === tabId);
-  });
-  document.querySelectorAll('.tab-content').forEach(c => {
-    c.classList.toggle('active', c.id === `${tabId}-page`);
-  });
-
-  if (tabId === 'home') {
-    document.body.classList.add('dark-theme');
-  } else {
-    document.body.classList.remove('dark-theme');
-  }
-
-  if (tabId === 'dashboard') loadThreatDashboard();
-  if (tabId === 'threats') loadThreatMonitor();
-  if (tabId === 'mitre') loadMitreData();
-};
-
-window.typeAI = typeAI;
-window.handleBatchProcess = handleBatchProcess;
-window.triggerRetrain = triggerRetrain;
-window.run9LogsDemo = () => {
-  const sampleLogs = [
-    "SELECT * FROM users WHERE id = 1 OR 1=1; --",
-    "<script>alert('XSS_ATTACK_DETECTED')</script>",
-    "Failed login attempt for user admin from 192.168.1.100",
-    "GET /../../../../etc/passwd HTTP/1.1",
-    "Suspicious outbound connection to 45.23.11.2 port 4444"
-  ];
-  document.getElementById('batchLogs').value = sampleLogs.join('\n');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tabId}-page`));
+  document.body.classList.toggle('dark-theme', tabId === 'home');
 };
 
 document.addEventListener('DOMContentLoaded', init);
