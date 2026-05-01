@@ -354,15 +354,20 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
   const hasScales = type !== 'doughnut' && type !== 'pie';
   const chart = ensureChart(key, canvasId, () => ({
     type,
-    data: { labels: [], datasets: [{ label: datasetLabel, data: [], backgroundColor: '#2563EB', borderColor: '#2563EB' }] },
+    data: { labels: [], datasets: [{ label: datasetLabel, data: [], backgroundColor: '#58A6FF', borderColor: '#58A6FF' }] },
     options: {
       responsive: true,
       plugins: { 
-        legend: { display: type === 'pie' || type === 'doughnut' },
+        legend: { 
+          display: type === 'pie' || type === 'doughnut',
+          labels: { color: '#F0F6FC', font: { family: 'Inter' } }
+        },
         tooltip: {
-          backgroundColor: '#111827',
-          titleColor: '#FFFFFF',
-          bodyColor: '#FFFFFF',
+          backgroundColor: '#161B22',
+          titleColor: '#58A6FF',
+          bodyColor: '#F0F6FC',
+          borderColor: '#30363D',
+          borderWidth: 1,
           cornerRadius: 8,
           padding: 12
         }
@@ -371,12 +376,12 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
         scales: { 
           x: { 
             grid: { display: false },
-            ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+            ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
           }, 
           y: { 
             beginAtZero: true,
-            grid: { color: '#E5E7EB' },
-            ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+            grid: { color: 'rgba(240, 246, 252, 0.1)' },
+            ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
           } 
         } 
       } : {}),
@@ -406,19 +411,30 @@ function updateChart(key, canvasId, labels, datasetLabel, values, type = 'bar') 
 function updateLineChart(key, canvasId, labels, datasetLabel, values) {
   const chart = ensureChart(key, canvasId, () => ({
     type: 'line',
-    data: { labels: [], datasets: [{ label: datasetLabel, data: [], borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', tension: 0.25, fill: true }] },
+    data: { labels: [], datasets: [{ label: datasetLabel, data: [], borderColor: '#58A6FF', backgroundColor: 'rgba(88, 166, 255, 0.1)', tension: 0.25, fill: true }] },
     options: { 
       responsive: true, 
-      plugins: { legend: { display: false } }, 
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161B22',
+          titleColor: '#58A6FF',
+          bodyColor: '#F0F6FC',
+          borderColor: '#30363D',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 12
+        }
+      }, 
       scales: { 
         x: { 
           grid: { display: false },
-          ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+          ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
         }, 
         y: { 
           beginAtZero: true,
-          grid: { color: '#E5E7EB' },
-          ticks: { color: '#4B5563', font: { family: 'Inter', size: 11 } }
+          grid: { color: 'rgba(240, 246, 252, 0.1)' },
+          ticks: { color: '#8B949E', font: { family: 'Inter', size: 11 } }
         } 
       } 
     },
