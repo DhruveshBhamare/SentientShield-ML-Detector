@@ -12,7 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 </head>
-<body class="page-fade-in">
+<body class="page-fade-in dark-theme">
   <!-- Cinematic Intro Overlay -->
   <div id="intro-overlay" class="intro-overlay">
     <div class="intro-content">
@@ -276,8 +276,8 @@
           <div class="form" style="display: flex; flex-direction: column; gap: 1.5rem;">
             <div>
               <label class="metric-label">Appearance</label>
-              <div style="margin-top: 0.5rem;">
-                <button class="btn btn-secondary" id="themeToggle">Toggle Dark Mode</button>
+              <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                System locked to Unified Dark Cyber Theme for production security.
               </div>
             </div>
             <div>
@@ -318,14 +318,8 @@
         if (c.id === `${tabId}-page`) c.classList.add('active');
       });
 
-      // Special handling for Home (Dark) vs Others (White)
-      if (tabId === 'home') {
-        document.body.classList.add('dark-theme');
-        document.querySelector('.navbar').style.background = 'rgba(13, 17, 23, 0.8)';
-      } else {
-        document.body.classList.remove('dark-theme');
-        document.querySelector('.navbar').style.background = 'var(--bg)';
-      }
+      // Special handling for Home (Dark) vs Others (White) - REMOVED
+      // Now all tabs are dark theme
 
       // Re-render charts if needed
       if (tabId === 'dashboard' || tabId === 'mitre') {

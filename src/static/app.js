@@ -249,12 +249,11 @@ function ensureChart(key, canvasId, configFactory) {
 }
 
 function getChartColors() {
-  const isDark = document.body.classList.contains('dark-theme');
   return {
-    text: isDark ? '#F0F6FC' : '#111827',
-    muted: isDark ? '#8B949E' : '#4B5563',
-    grid: isDark ? 'rgba(240, 246, 252, 0.1)' : '#E5E7EB',
-    primary: isDark ? '#58A6FF' : '#2563EB'
+    text: '#F0F6FC',
+    muted: '#8B949E',
+    grid: 'rgba(240, 246, 252, 0.1)',
+    primary: '#58A6FF'
   };
 }
 
@@ -376,7 +375,6 @@ window.switchTab = (tabId) => {
   state.currentTab = tabId;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tabId}-page`));
-  document.body.classList.toggle('dark-theme', tabId === 'home');
 };
 
 document.addEventListener('DOMContentLoaded', init);
