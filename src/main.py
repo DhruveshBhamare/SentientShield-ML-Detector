@@ -3,6 +3,13 @@ import logging
 import asyncio
 from datetime import datetime
 
+# Pre-import heavy modules to avoid deadlock in background tasks
+try:
+    import xgboost
+    import sklearn
+except ImportError:
+    pass
+
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
