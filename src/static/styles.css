@@ -395,6 +395,43 @@ input:focus, select:focus, textarea:focus {
 .intro-logo-container {
     opacity: 0;
     animation: fadeInLogo 1s ease 2s forwards;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scanning-ring {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    animation: rotate 4s linear infinite;
+    opacity: 0.3;
+    z-index: -1;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.hologram-shield-large {
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.66-3.13 9.03-7 10.18-3.87-1.15-7-5.52-7-10.18V6.3l7-3.12z'/%3E%3C/svg%3E");
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v5.7c0 4.66-3.13 9.03-7 10.18-3.87-1.15-7-5.52-7-10.18V6.3l7-3.12z'/%3E%3C/svg%3E");
+    margin-bottom: 2rem;
+    animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
 }
 
 @keyframes fadeInLogo {
@@ -403,20 +440,72 @@ input:focus, select:focus, textarea:focus {
 }
 
 .glitch-title {
-    font-size: 4rem;
-    font-weight: 800;
-    letter-spacing: 0.5rem;
-    color: var(--text);
+    font-size: 7rem; /* Significantly bigger */
+    font-weight: 900;
+    letter-spacing: 1.2rem;
+    color: #FFFFFF;
     position: relative;
-    text-shadow: 2px 2px var(--danger), -2px -2px var(--primary);
+    text-transform: uppercase;
+    /* Dramatic Highlight & Glow */
+    text-shadow: 
+        0 0 20px rgba(88, 166, 255, 0.8),
+        0 0 40px rgba(88, 166, 255, 0.4),
+        0 0 60px rgba(88, 166, 255, 0.2);
+    animation: glitch-anim 3s infinite linear alternate-reverse;
+}
+
+.glitch-title::before,
+.glitch-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+}
+
+.glitch-title::before {
+    left: 4px;
+    text-shadow: -3px 0 #F85149;
+    clip: rect(44px, 9999px, 56px, 0);
+    animation: glitch-anim-2 5s infinite linear alternate-reverse;
+}
+
+.glitch-title::after {
+    left: -4px;
+    text-shadow: -3px 0 #BC8CFF;
+    clip: rect(12px, 9999px, 32px, 0);
+    animation: glitch-anim 2s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+    0% { clip: rect(22px, 9999px, 44px, 0); transform: skew(0.5deg); }
+    5% { clip: rect(82px, 9999px, 91px, 0); transform: skew(0.2deg); }
+    10% { clip: rect(12px, 9999px, 56px, 0); transform: skew(0.8deg); }
+    15% { clip: rect(32px, 9999px, 12px, 0); transform: skew(0.1deg); }
+    20% { clip: rect(54px, 9999px, 82px, 0); transform: skew(0.4deg); }
+    100% { clip: rect(22px, 9999px, 44px, 0); transform: skew(0.5deg); }
+}
+
+@keyframes glitch-anim-2 {
+    0% { clip: rect(12px, 9999px, 32px, 0); }
+    20% { clip: rect(44px, 9999px, 56px, 0); }
+    40% { clip: rect(82px, 9999px, 91px, 0); }
+    60% { clip: rect(54px, 9999px, 82px, 0); }
+    80% { clip: rect(32px, 9999px, 12px, 0); }
+    100% { clip: rect(12px, 9999px, 32px, 0); }
 }
 
 .intro-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.5rem; /* Slightly bigger */
+    font-weight: 500;
     color: var(--primary);
-    margin-top: 1rem;
-    letter-spacing: 0.2rem;
+    margin-top: 1.5rem;
+    letter-spacing: 0.4rem;
     text-transform: uppercase;
+    opacity: 0.8;
+    text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
 }
 
 @keyframes float {
