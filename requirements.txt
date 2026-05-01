@@ -1,6 +1,5 @@
 fastapi
 uvicorn[standard]
-streamlit
 scikit-learn
 pandas
 numpy

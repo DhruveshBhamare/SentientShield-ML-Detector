@@ -44,11 +44,9 @@
         <div class="logo"><span class="shield"></span>SentientShield</div>
         <nav>
           <a href="#hero">Home</a>
-          <a href="/static/neuralfort_dashboard.html">Dashboard</a>
           <a href="#threats">Threat Monitor</a>
           <a href="#mitre">MITRE</a>
           <a href="#reports">Reports</a>
-          <a href="http://127.0.0.1:8502" target="_blank">Analytics</a>
           <a href="#bot">SentientBot</a>
         </nav>
       </div>
@@ -63,8 +61,7 @@
           <h1>AI-Powered Cyber Intelligence for Modern Defense</h1>
           <p style="animation-delay: 0.2s;">SentientShield transforms raw security logs into actionable intelligence using AI.</p>
           <div class="actions" style="margin-top: 2rem;">
-            <a href="/static/neuralfort_dashboard.html" class="btn btn-primary">Launch Dashboard</a>
-            <a href="#threats" class="btn btn-secondary">View Threats</a>
+            <a href="#threats" class="btn btn-primary">Monitor Threats</a>
           </div>
         </div>
       </section>
@@ -89,11 +86,9 @@
               <ol style="margin-left: 20px; color: var(--muted);">
                 <li>Ensure dependencies are installed from <code>requirements.txt</code> in a virtualenv.</li>
                 <li>Start the API server: <code>python -m uvicorn api.main:app --host 127.0.0.1 --port 8000</code> or run <code>scripts/start_uvicorn.bat</code>.</li>
-                <li>Open the dashboards:
+                <li>Open the dashboard:
                   <ul>
-                    <li><code>/static/premium.html</code> — Overview</li>
-                    <li><code>/static/neuralfort_dashboard.html</code> — NeuralFort Control Center</li>
-                    <li><code>/static/dashboard.html</code> — Model Dashboard</li>
+                    <li><code>/static/premium.html</code> — Command Center Overview</li>
                   </ul>
                 </li>
               </ol>

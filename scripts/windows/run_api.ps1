@@ -1,6 +1,6 @@
 param(
   [string]$PythonExe = "",
-  [string]$Host = "127.0.0.1",
+  [string]$ListenHost = "127.0.0.1",
   [int]$Port = 10000
 )
 
@@ -18,5 +18,5 @@ if ([string]::IsNullOrWhiteSpace($PythonExe)) {
 
 $env:PYTHONUNBUFFERED = "1"
 
-& $PythonExe -m uvicorn src.main:app --host $Host --port $Port
+& $PythonExe -m uvicorn src.main:app --host $ListenHost --port $Port
 
