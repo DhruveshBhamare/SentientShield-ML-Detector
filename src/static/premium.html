@@ -15,16 +15,20 @@
 <body class="page-fade-in dark-theme">
   <!-- Cinematic Intro Overlay -->
   <div id="intro-overlay" class="intro-overlay">
+    <div class="intro-bg-grid"></div>
     <div class="intro-content">
-      <div id="intro-logo-container" class="intro-logo-container">
+      <div id="intro-logo-container" class="intro-logo-container" style="opacity: 0; transform: scale(0.8);">
         <div class="scanning-ring"></div>
         <div class="hologram-shield-large"></div>
         <h1 class="glitch-title" data-text="SENTIENTSHIELD">SENTIENTSHIELD</h1>
         <p class="intro-subtitle">Cyber Intelligence Command Center</p>
       </div>
-      <div class="terminal-loader" style="margin-top: 2rem;">
-        <div id="terminal-text"></div>
+      <div class="terminal-loader" style="margin-top: 3rem;">
+        <div id="terminal-text" style="min-height: 4.5em;"></div>
         <span class="terminal-cursor">_</span>
+      </div>
+      <div id="boot-progress-container" style="width: 300px; height: 2px; background: rgba(88, 166, 255, 0.1); margin: 2rem auto; overflow: hidden; opacity: 0;">
+        <div id="boot-progress-bar" style="width: 0%; height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary);"></div>
       </div>
     </div>
   </div>
@@ -334,24 +338,67 @@
       document.getElementById('chatInput').value = text;
     }
 
-    // Intro Sequence Logic
+    // Main Initialization Sequence with GSAP
     window.addEventListener('load', () => {
-      const terminalText = "INITIALIZING SYSTEM...\nLOADING NEURAL MODULES...\nESTABLISHING CONNECTION TO SECURE CORE...";
-      if (typeof typeAI === 'function') typeAI(terminalText, 'terminal-text');
-      
-      setTimeout(() => {
-        const overlay = document.getElementById('intro-overlay');
-        const root = document.getElementById('app-root');
-        
-        if (overlay) overlay.style.display = 'none';
-        if (root) {
-          root.classList.remove('dashboard-hidden');
-          root.classList.add('dashboard-visible');
+      const tl = gsap.timeline();
+      const terminalEl = document.getElementById('terminal-text');
+      const logoContainer = document.getElementById('intro-logo-container');
+      const progressContainer = document.getElementById('boot-progress-container');
+      const progressBar = document.getElementById('boot-progress-bar');
+      const overlay = document.getElementById('intro-overlay');
+      const root = document.getElementById('app-root');
+
+      // 1. Initial State
+      gsap.set(logoContainer, { opacity: 0, scale: 0.8 });
+      gsap.set(progressContainer, { opacity: 0 });
+
+      // 2. Typing Sequence
+      const lines = [
+        "INITIALIZING SYSTEM...",
+        "LOADING NEURAL MODULES...",
+        "ESTABLISHING SECURE CONNECTION...",
+        "AUTHENTICATING COMMANDER..."
+      ];
+
+      let currentLine = 0;
+      function typeLine() {
+        if (currentLine < lines.length) {
+          const p = document.createElement('div');
+          p.style.marginBottom = '0.5rem';
+          terminalEl.appendChild(p);
+          
+          let charIdx = 0;
+          const lineText = lines[currentLine];
+          const typeInterval = setInterval(() => {
+            if (charIdx < lineText.length) {
+              p.textContent += lineText[charIdx];
+              charIdx++;
+            } else {
+              clearInterval(typeInterval);
+              currentLine++;
+              setTimeout(typeLine, 400);
+            }
+          }, 30);
         }
-        
-        // Start on Home page
-        switchTab('home');
-      }, 3000);
+      }
+
+      typeLine();
+
+      // 3. GSAP Animation Sequence
+      tl.to(logoContainer, { opacity: 1, scale: 1, duration: 1.5, ease: "power4.out", delay: 1 })
+        .to(progressContainer, { opacity: 1, duration: 0.5 }, "-=0.5")
+        .to(progressBar, { width: "100%", duration: 2, ease: "slow(0.7, 0.7, false)" })
+        .to(overlay, { 
+          opacity: 0, 
+          duration: 1, 
+          ease: "power2.inOut",
+          onComplete: () => {
+            overlay.style.display = 'none';
+            root.classList.remove('dashboard-hidden');
+            root.classList.add('dashboard-visible');
+            switchTab('home');
+          }
+        });
     });
 
     // Theme Toggle Handler
