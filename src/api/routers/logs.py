@@ -253,6 +253,39 @@ async def risk_gauge(user: Dict = Depends(auth_dependency)):
     avg = ctx["trend"].average_risk_today()
     return {"avg": avg, "user": user.get("sub") or user.get("uid")}
 
+@router.get("/dashboard")
+async def get_dashboard_summary(user: Dict = Depends(auth_dependency)):
+    ctx = _get_ctx()
+    alerts_today = ctx["trend"].alerts_today()
+    critical_today = ctx["trend"].critical_today()
+    avg_risk = ctx["trend"].average_risk_today()
+    
+    # Get trends (last 24 hours)
+    frequency = ctx["trend"].attack_frequency(bucket="hour", limit=24)
+    trend_labels = [item["bucket"] for item in frequency]
+    trend_values = [item["count"] for item in frequency]
+    
+    # MITRE Stats
+    mitre_summary = ctx["trend"].mitre_distribution(limit=10)
+    mitre_summary_dict = {item["tactic"]: item["count"] for item in mitre_summary}
+    
+    mitre_stats = {item["technique_id"]: item["count"] for item in ctx["trend"].mitre_table(limit=100)}
+    mitre_details = ctx["trend"].mitre_table(limit=20)
+
+    return {
+        "total_alerts": alerts_today,
+        "critical_alerts": critical_today,
+        "avg_risk": avg_risk,
+        "trends": {
+            "labels": trend_labels,
+            "values": trend_values
+        },
+        "mitre_summary": mitre_summary_dict,
+        "mitre_stats": mitre_stats,
+        "mitre_details": mitre_details,
+        "user": user.get("sub") or user.get("uid")
+    }
+
 class LlmGenerateRequest(BaseModel):
     prompt: str
 

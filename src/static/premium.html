@@ -30,6 +30,7 @@
       <div id="boot-progress-container" style="width: 300px; height: 2px; background: rgba(88, 166, 255, 0.1); margin: 2rem auto; overflow: hidden; opacity: 0;">
         <div id="boot-progress-bar" style="width: 0%; height: 100%; background: var(--primary); box-shadow: 0 0 10px var(--primary);"></div>
       </div>
+      <div id="skip-intro" style="margin-top: 1rem; opacity: 0; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; text-decoration: underline;" onclick="skipIntro()">Bypass Initialization</div>
     </div>
   </div>
 
@@ -328,8 +329,13 @@
       // Re-render charts if needed
       if (tabId === 'dashboard' || tabId === 'mitre') {
         setTimeout(() => {
-          if (typeof loadOverview === 'function') loadOverview();
-          if (typeof loadLists === 'function') loadLists();
+          if (typeof loadThreatDashboard === 'function') loadThreatDashboard();
+          if (typeof loadMitreData === 'function') loadMitreData();
+        }, 100);
+      }
+      if (tabId === 'threats') {
+        setTimeout(() => {
+          if (typeof loadThreatMonitor === 'function') loadThreatMonitor();
         }, 100);
       }
     }
@@ -338,19 +344,27 @@
       document.getElementById('chatInput').value = text;
     }
 
+    let introTimeline;
+    function skipIntro() {
+      if (introTimeline) introTimeline.progress(1);
+    }
+
     // Main Initialization Sequence with GSAP
     window.addEventListener('load', () => {
       const tl = gsap.timeline();
+      introTimeline = tl;
       const terminalEl = document.getElementById('terminal-text');
       const logoContainer = document.getElementById('intro-logo-container');
       const progressContainer = document.getElementById('boot-progress-container');
       const progressBar = document.getElementById('boot-progress-bar');
+      const skipBtn = document.getElementById('skip-intro');
       const overlay = document.getElementById('intro-overlay');
       const root = document.getElementById('app-root');
 
       // 1. Initial State
       gsap.set(logoContainer, { opacity: 0, scale: 0.8 });
       gsap.set(progressContainer, { opacity: 0 });
+      gsap.set(skipBtn, { opacity: 0 });
 
       // 2. Typing Sequence
       const lines = [
@@ -386,6 +400,7 @@
 
       // 3. GSAP Animation Sequence
       tl.to(logoContainer, { opacity: 1, scale: 1, duration: 1.5, ease: "power4.out", delay: 1 })
+        .to(skipBtn, { opacity: 0.5, duration: 1 }, "-=1")
         .to(progressContainer, { opacity: 1, duration: 0.5 }, "-=0.5")
         .to(progressBar, { width: "100%", duration: 2, ease: "slow(0.7, 0.7, false)" })
         .to(overlay, { 
